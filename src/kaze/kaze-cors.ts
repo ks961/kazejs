@@ -7,12 +7,12 @@ export type KazeCapitalizedHeaders =
 export type OriginFn = (origin: string) => string;
 
 export interface KazeCorsOptions {
-    maxAge: number,
-    credentials: boolean,
-    origin: string | OriginFn,
-    allowHeaders: Array<KazeCapitalizedHeaders>,
-    exposeHeaders: Array<KazeCapitalizedHeaders>,
-    allowMethods: Array<Uppercase<KazeHttpMethod>>,
+    maxAge?: number,
+    credentials?: boolean,
+    origin?: string | OriginFn,
+    allowHeaders?: Array<KazeCapitalizedHeaders>,
+    allowMethods?: Array<Uppercase<KazeHttpMethod>>,
+    exposeHeaders?: Array<KazeCapitalizedHeaders>,
 }
 
 const optionHeaderMap: Record<keyof KazeCorsOptions, string> = {
@@ -45,7 +45,8 @@ export function cors(options: KazeCorsOptions): KazeRouteHandler {
                 const result = option(reqOrigin);
                 ctx.res.setHeader(header, result);
             } else {
-                ctx.res.setHeader(header, option.toString());
+                if(option)
+                    ctx.res.setHeader(header, option.toString());
             }
         });
 

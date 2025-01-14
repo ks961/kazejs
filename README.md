@@ -1,6 +1,6 @@
 # KazeJS
 
-A lightweight and flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, and middleware management. This package allows easy integration of external dependencies, such as a database, into your application. It supports dynamic route groups, global middleware, schema validation with error handling, and static file serving. With customizable error handlers for general and validation errors, it ensures a smooth development experience for building scalable web applications with type safety and clean architecture.
+A flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, and middleware management. This package allows easy integration of external dependencies, such as a database, into your application. It supports dynamic route groups, global middleware, schema validation with error handling, and static file serving. With customizable error handlers for general and validation errors, it ensures a smooth development experience for building scalable web applications with type safety and clean architecture.
 
 - **Features**
     - [**Routing [ static | dynamic ]**](#1-routing--static--dynamic-)
@@ -306,4 +306,21 @@ async function auth(ctx: KazeContext, next: KazeNextFunction) {
         }
     }
 }
+```
+
+---
+
+### 11. **CORS Handling**
+
+**Cors Example**:
+```typescript
+
+app.addGlobalMiddleware(cors({
+    origin: "http://localhost:3000",
+    allowMethods: ["GET", "POST"],
+}));
+
+app.get("/api/endpoint", (ctx: KazeContext) => {
+    ctx.res.send("hello");
+});
 ```

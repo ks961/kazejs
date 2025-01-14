@@ -125,7 +125,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #staticFileMap = new Map<string, StaticFile>();
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
-    static routerClass: DerivedRouters = MapRouter;
+    static routerClass: DerivedRouters;
     
     constructor(options?: KazeOptions<KazeDependencies>) {
 
@@ -152,10 +152,9 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         });
     }
 
-    static Router(): Router {
-        return new Kaze.routerClass();
+    static Router(router: DerivedRouters = MapRouter): Router {
+        return new router();
     }
-
 
     #loadStaticDirFiles(dirPath: string) {
         const dirListing = readdirSync(dirPath);
@@ -285,7 +284,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
             handlers: KazeRouteHandler[], 
             route: KazeRoute
         ) => {
-            const fullRoute = `${pRoute}${route}`; 
+            const fullRoute = route !== "/" ? `${pRoute}${route}` : pRoute; 
             this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...handlers)
         });
 
@@ -294,7 +293,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
             dynRouteInfo: DynamicRouteInfo,
             _: DynamicSegmentLength
         ) => {
-            const fullRoute = `${pRoute}${dynRouteInfo.fullRoute}`;
+            const fullRoute = dynRouteInfo.fullRoute !== "/" ? `${pRoute}${dynRouteInfo.fullRoute}` : pRoute;
             this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...dynRouteInfo.handlers)
         });
     }

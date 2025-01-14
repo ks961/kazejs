@@ -12,6 +12,7 @@ A lightweight and flexible Node.js web framework built with TypeScript, focusing
     - [**Global middleware support**](#7-global-middleware-support)
     - [**Global error handling support [ Handler Errors | Schema validation Errors ]**](#8-global-error-handling-support--handler-errors--schema-validation-errors-)
     - [**Async Request Handling**](#9-async-request-handling)
+    - [**Jwt Support**](#10-jwt-support)
 
 ---
 
@@ -220,4 +221,88 @@ async function anyMiddleware(ctx: KazeContext, next: KazeNextFunction) {
 app.get("/middleware", anyMiddleware, async(ctx: KazeContext) => {
     ctx.res.send("works");
 });
+```
+
+---
+
+### 10. **Jwt Support**
+
+**Jwt Example**:
+```typescript
+
+type CustomClaimType = {
+    role: "admin" | "user"
+}
+
+app.get("/login", async (ctx: KazeContext) => {
+    
+     const jwt = await signJwt({
+            aud: "http://localhost:4000",
+            iat: createIssueAt(new Date()),
+            exp: createExpiry("2h"),
+            iss: "server-x",
+            sub: "user"
+        },
+        { role: "admin" },
+        "itsasecret", // secret key
+        { alg: "HS512" } // optional
+    );
+
+    ctx.res.json({ token: jwt });
+
+    // or send it via cookie
+    
+    ctx.res.setCookie("token", jwt, {
+        path: "/",
+        expires: new Date(Date.now() + 60 * 60 * 1000), // 1hr from now
+        httpOnly: true,
+        sameSite: "Lax"
+    })
+});
+
+// Auth Middlewares
+async function auth(ctx: KazeContext, next: KazeNextFunction) {
+    const token = ctx.req.cookies?.get("token");
+
+    try {
+        const verifiedPayload = await verifyJwt<CustomClaimType>(token,"itsasecret");
+        next();
+    } catch {
+        ctx.res.send("Invalid token");
+        // or you can throw a custom error and handle it in global-error handler
+    }
+}
+
+app.get("/protected-route", auth, async(ctx: KazeContext) => {
+    ctx.res.send("works");
+});
+```
+
+#### Error Handling
+
+The `verifyJwt` function may throw the following errors:
+    1. **DirtyJwtSignature**: If the JWT signature doesn't match or is invalid.
+    2. **ExpiredJwt**: If the token has expired (based on the `exp` claim).
+    3. **InvalidJwt**: If the token is malformed or cannot be decoded properly.
+
+```typescript
+async function auth(ctx: KazeContext, next: KazeNextFunction) {
+    const jwt = "your.jwt.token";
+    const secret = "itsasecret";
+
+    try {
+        const verifiedClaims = await verifyJwt(jwt, secret);
+        console.log(verifiedClaims);
+    } catch (error) {
+        if (error instanceof DirtyJwtSignature) {
+            console.error("Error: JWT signature is invalid or has been tampered with.");
+        } else if (error instanceof ExpiredJwt) {
+            console.error("Error: JWT has expired.");
+        } else if (error instanceof InvalidJwt) {
+            console.error("Error: JWT is malformed or cannot be decoded.");
+        } else {
+            console.error("Unexpected error:", error);
+        }
+    }
+}
 ```

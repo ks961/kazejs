@@ -239,7 +239,7 @@ app.get("/login", async (ctx: KazeContext) => {
      const jwt = await signJwt({
             aud: "http://localhost:4000",
             iat: createIssueAt(new Date()),
-            exp: createExpiry("2h"),
+            exp: createExpiry("1h"),
             iss: "server-x",
             sub: "user"
         },

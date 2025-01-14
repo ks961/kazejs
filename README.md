@@ -13,6 +13,7 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Global error handling support [ Handler Errors | Schema validation Errors ]**](#8-global-error-handling-support--handler-errors--schema-validation-errors-)
     - [**Async Request Handling**](#9-async-request-handling)
     - [**Jwt Support**](#10-jwt-support)
+    - [**Cors Handling**](#11-cors-handling)
 
 ---
 

@@ -235,7 +235,7 @@ type CustomClaimType = {
 }
 
 app.get("/login", async (ctx: KazeContext) => {
-    
+
      const jwt = await signJwt({
             aud: "http://localhost:4000",
             iat: createIssueAt(new Date()),
@@ -281,9 +281,10 @@ app.get("/protected-route", auth, async(ctx: KazeContext) => {
 #### Error Handling
 
 The `verifyJwt` function may throw the following errors:
-    1. **DirtyJwtSignature**: If the JWT signature doesn't match or is invalid.
-    2. **ExpiredJwt**: If the token has expired (based on the `exp` claim).
-    3. **InvalidJwt**: If the token is malformed or cannot be decoded properly.
+
+1. **DirtyJwtSignature**: If the JWT signature doesn't match or is invalid.
+2. **ExpiredJwt**: If the token has expired (based on the `exp` claim).
+3. **InvalidJwt**: If the token is malformed or cannot be decoded properly.
 
 ```typescript
 async function auth(ctx: KazeContext, next: KazeNextFunction) {

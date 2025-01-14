@@ -1,12 +1,12 @@
 {
-  "name": "kaze-js",
+  "name": "@d3vtool/kazejs",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "tsc": "tsc --watch",
     "build": "tsc && esbuild ./dist/**/*.js --minify --outdir=./dist --allow-overwrite",
-    "dev": "node dist/main.js"
+    "dev": "nodemon dist/index.js"
   },
 "keywords": [
     "kaze",

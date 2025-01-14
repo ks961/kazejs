@@ -127,7 +127,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
 
     static routerClass: DerivedRouters;
     
-    constructor(options: KazeOptions<KazeDependencies>) {
+    constructor(options?: KazeOptions<KazeDependencies>) {
 
         Kaze.routerClass = options?.router ?? MapRouter;
         this.#router = new Kaze.routerClass();
@@ -139,11 +139,11 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         this.#errorHandler = this.#defaultErrorHandler;
         this.#validationFailedHandler = this.#defaultVFailedHandler;
 
-        this.#server = http.createServer(async(
+        this.#server = http.createServer((
             req: http.IncomingMessage, 
             res: http.ServerResponse
         ) => {
-            await this.#handle(req, res, options.dependencies);
+            this.#handle(req, res, options?.dependencies);
         });
     }
 

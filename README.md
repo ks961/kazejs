@@ -1,6 +1,6 @@
 # KazeJS
 
-A flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, and middleware management. This package allows easy integration of external dependencies, such as a database, into your application. It supports dynamic route groups, global middleware, schema validation with error handling, and static file serving. With customizable error handlers for general and validation errors, it ensures a smooth development experience for building scalable web applications with type safety and clean architecture.
+A lightweight and flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, and middleware management. This package allows easy integration of external dependencies, such as a database, into your application. It supports dynamic route groups, global middleware, schema validation with error handling, and static file serving. With customizable error handlers for general and validation errors, it ensures a smooth development experience for building scalable web applications with type safety and clean architecture.
 
 - **Features**
     - [**Routing [ static | dynamic ]**](#1-routing--static--dynamic-)

@@ -35,7 +35,7 @@
   "author": "Sudhanshu Kumar",
   "license": "MIT",
   "type": "module",
-  "description": "A flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, middleware, and schema validation. Supports dynamic routes, global middleware, static files, and customizable error handling for scalable apps.",
+  "description": "A lightweight and flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, middleware, and schema validation. Supports dynamic routes, global middleware, static files, and customizable error handling for scalable apps.",
   "devDependencies": {
     "@types/node": "^22.10.5",
     "esbuild": "^0.24.2",

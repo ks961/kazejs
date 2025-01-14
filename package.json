@@ -1,0 +1,49 @@
+{
+  "name": "kazejs",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "tsc": "tsc --watch",
+    "build": "tsc && esbuild ./dist/**/*.js --minify --outdir=./dist --allow-overwrite",
+    "dev": "node dist/main.js"
+  },
+"keywords": [
+    "kaze",
+    "routing",
+    "middleware",
+    "dependency-injection",
+    "schema-validation",
+    "async-handling",
+    "static-files",
+    "global-error-handling",
+    "route-grouping",
+    "http-server",
+    "express-like",
+    "typescript",
+    "api-server",
+    "validator",
+    "json-body",
+    "cookie-parser",
+    "query-validation",
+    "params-validation",
+    "rest-api",
+    "web-server"
+  ],
+  "author": "Sudhanshu Kumar",
+  "license": "MIT",
+  "type": "module",
+  "description": "A flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, middleware, and schema validation. Supports dynamic routes, global middleware, static files, and customizable error handling for scalable apps.",
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@d3vtool/secid": "^1.1.6",
+    "@d3vtool/utils": "^6.3.1"
+  },
+  "files": [
+    "dist"
+  ]
+}

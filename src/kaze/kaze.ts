@@ -125,11 +125,16 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #staticFileMap = new Map<string, StaticFile>();
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
-    static routerClass: DerivedRouters;
+    static routerClass: DerivedRouters = MapRouter;
     
     constructor(options?: KazeOptions<KazeDependencies>) {
 
         Kaze.routerClass = options?.router ?? MapRouter;
+
+        if (typeof Kaze.routerClass !== 'function') {
+            throw new Error('Invalid router class');
+        }
+
         this.#router = new Kaze.routerClass();
         
         this.#httpResponseHeaders = {};

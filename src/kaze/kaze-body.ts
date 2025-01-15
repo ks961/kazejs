@@ -30,7 +30,7 @@ export function parseBody() {
             } else if(contentType === "application/json") {
                 ctx.req.body = JSON.parse(ctx.req.rawBody);
             } else {
-                ctx.req.body = ctx.req.rawBody;
+                ctx.req.body = null;
             }
         } catch {
             ctx.req.body = null;

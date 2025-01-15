@@ -3,10 +3,6 @@ import { KazeContext, KazeNextFunction } from "./kaze";
 import { KazeValidationError } from "./kaze-errors";
 import { parseBySchemaType } from "./kaze-validate";
 
-type JsonOption = {
-    urlencoded: boolean
-}
-
 function parseUrlEncoded(body: string): Record<string, string> {
     const bodyData = body.split("&");
 
@@ -19,22 +15,22 @@ function parseUrlEncoded(body: string): Record<string, string> {
     return parsedData;
 }
 
-export function parseJson(option: JsonOption = {
-    urlencoded: false
-}) {
+export function parseBody() {
 
     return function(ctx: KazeContext, next: KazeNextFunction) {
         const contentType = ctx.req.headers["content-type"];
+        if(!contentType) {
+            next();
+            return;
+        }
+
         try {
-            if(
-                contentType === "application/x-www-form-urlencoded" &&
-                option.urlencoded
-            ) {
+            if(contentType === "application/x-www-form-urlencoded") {
                 ctx.req.body = parseUrlEncoded(ctx.req.rawBody);
-            } else if(contentType === "application/json" && !option.urlencoded) {
+            } else if(contentType === "application/json") {
                 ctx.req.body = JSON.parse(ctx.req.rawBody);
             } else {
-                ctx.req.body = null;
+                ctx.req.body = ctx.req.rawBody;
             }
         } catch {
             ctx.req.body = null;

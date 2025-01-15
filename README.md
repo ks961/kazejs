@@ -168,7 +168,7 @@ app.static("public");
 ```typescript
 app.addGlobalMiddleware([
     parseCookies, // Middleware to parse cookies
-    parseJson()   // Middleware to parse incoming JSON body
+    parseBody()   // Middleware to parse incoming JSON body
 ]);
 
 // or add it one by one
@@ -323,5 +323,29 @@ app.addGlobalMiddleware(cors({
 
 app.get("/api/endpoint", (ctx: KazeContext) => {
     ctx.res.send("hello");
+});
+```
+
+### 12. **File Upload**
+
+**File upload Example**:
+```typescript
+
+app.addGlobalMiddleware([
+    // It will handle both normal text field and file upload
+    // only for content-type: 'multipart/form-data'
+    fileUpload({
+        limit: 100,
+    })
+]);
+
+app.post("/submit", (ctx: KazeContext) => {
+    
+    if(ctx.req.files && ctx.req.files?.length > 0) {
+        console.log(ctx.req.files?.[0].fileSize);
+    }
+
+    console.log(ctx.req.body) // if there're normal fields
+    ctx.res.send("works");
 });
 ```

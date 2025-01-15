@@ -8,6 +8,7 @@ import { DerivedRouters, DynamicRoute, DynamicRouteInfo, HttpMethods, Router } f
 import { transformErrorStackToHtml } from "./kaze-utils";
 import { KazeRouteError, KazeRouteNotFound, KazeValidationError } from "./kaze-errors";
 import { Cookie, CookieOptions, createCookie } from "./kaze-cookies";
+import { KazeFile } from "./kaze-fileupload";
 
 interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     secure: boolean,
@@ -16,6 +17,7 @@ interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     params?: Partial<Params>,
     rawBody: string,
     body?: Body,
+    files?: KazeFile[]
 }
 
 interface KazeResponse extends Omit<http.ServerResponse, "statusCode" | "setHeader"> {

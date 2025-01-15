@@ -46,9 +46,15 @@ import {
 } from "./kaze-cors";
 
 import {
-    parseJson,
+    parseBody,
     jsonValidate,
 } from "./kaze-body";
+
+import {
+    fileUpload,
+    KazeFile,
+    FileUploadOptions
+} from "./kaze-fileupload";
 
 export {
     Kaze,
@@ -80,8 +86,11 @@ export {
     cors,
     parseCookies,
     Cookie,
-    parseJson,
+    parseBody,
     jsonValidate,
     paramsValidate,
     queryValidate,
+    fileUpload,
+    type KazeFile,
+    type FileUploadOptions
 }

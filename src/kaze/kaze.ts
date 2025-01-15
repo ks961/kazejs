@@ -15,7 +15,6 @@ interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     cookies?: Cookie,
     query?: Partial<Query>,
     params?: Partial<Params>,
-    rawBody: Buffer,
     body?: Body,
     files?: KazeFile[]
 }
@@ -430,101 +429,86 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                 return acc;
             }, {} as Record<string, string>);
 
-            const req = Object.create(request);
-            const res = Object.create(response);
-
-            Object.assign(req, {
-                params: params,
-                query: queriesMap,
-                secure: this.#isHttps,
-                rawBody: Buffer.alloc(0),
-            });
-        
-            let chunks: Buffer[] = [];
-            request.on("data", (chunk: Buffer) => {
-                chunks.push(chunk);
-            });
-
-
-            request.on("end", () => {
-                req.rawBody = Buffer.concat(chunks);
-                const ctx: KazeContext<KazeDependencies> = {
-                    dependencies,
-                    req,
-                    res: Object.assign(res, {
-                        send: (data: string) => {
-                            this.#send(data);
-                            this.#handleResponse(response);
-                        },
-                        json: (jsonObj: unknown) => {
-                            this.#json(jsonObj);
-                            this.#handleResponse(response);
-                        },
-                        html: (htmlSource: string) => {
-                            this.#html(htmlSource);
-                            this.#handleResponse(response);
-                        },
-                        sendFile: async(path: string) => {
-                            await this.#sendFile(path);
-                            this.#handleResponse(response);
-                        },
-                        setHeader: this.#setHeader.bind(this),
-                        statusCode: this.#statusCode.bind(this),
-                        addHeader: (
-                            key: keyof http.IncomingHttpHeaders, 
-                            value: string | string[]
-                        ) => {
-                            response.setHeader(key as string, value);
-                        },
-                        setCookie: (
-                            key: string, 
-                            value: string, 
-                            options: CookieOptions
-                        ) => {
-                            const cookie = createCookie(key, value, options);
-                            response.setHeader("Set-Cookie", cookie);
-                        }
-                    }),
-                }
-    
-                const allHandlers = [
-                    ...this.#globalMiddlewares, 
-                    ...routeHandlers as KazeRouteHandler[],
-                ];
-    
-                function* handlerGen() {
-                    for(let i = 0; i < allHandlers.length; ++i) {
-                        yield allHandlers[i];
+            const ctx: KazeContext<KazeDependencies> = {
+                dependencies,
+                req: Object.assign(request, {
+                    params: params,
+                    query: queriesMap,
+                    secure: this.#isHttps,
+                }),
+                
+                res: Object.assign(response, {
+                    send: (data: string) => {
+                        this.#send(data);
+                        this.#handleResponse(response);
+                    },
+                    json: (jsonObj: unknown) => {
+                        this.#json(jsonObj);
+                        this.#handleResponse(response);
+                    },
+                    html: (htmlSource: string) => {
+                        this.#html(htmlSource);
+                        this.#handleResponse(response);
+                    },
+                    sendFile: async(path: string) => {
+                        await this.#sendFile(path);
+                        this.#handleResponse(response);
+                    },
+                    setHeader: this.#setHeader.bind(this),
+                    statusCode: this.#statusCode.bind(this),
+                    addHeader: (
+                        key: keyof http.IncomingHttpHeaders, 
+                        value: string | string[]
+                    ) => {
+                        response.setHeader(key as string, value);
+                    },
+                    setCookie: (
+                        key: string, 
+                        value: string, 
+                        options: CookieOptions
+                    ) => {
+                        const cookie = createCookie(key, value, options);
+                        response.setHeader("Set-Cookie", cookie);
                     }
+                }),
+            }
+
+            const allHandlers = [
+                ...this.#globalMiddlewares, 
+                ...routeHandlers as KazeRouteHandler[],
+            ];
+
+            function* handlerGen() {
+                for(let i = 0; i < allHandlers.length; ++i) {
+                    yield allHandlers[i];
                 }
-    
-                const hGen = handlerGen();
-    
-                const next = async() => {
-                    let result = hGen.next();
-                    if(!result.done) {
-                        const handler = result.value;
-                        try {
-                            
-                            await handler(ctx, next);
-    
-                        } catch(err: unknown) {
-    
-                            if(err instanceof KazeValidationError) {
-                                this.#validationFailedHandler(
-                                    ctx,
-                                    err
-                                );
-                            } else {
-                                this.#errorHandler(ctx, err);
-                            }
+            }
+
+            const hGen = handlerGen();
+
+            const next = async() => {
+                let result = hGen.next();
+                if(!result.done) {
+                    const handler = result.value;
+                    try {
+                        
+                        await handler(ctx, next);
+
+                    } catch(err: unknown) {
+
+                        if(err instanceof KazeValidationError) {
+                            this.#validationFailedHandler(
+                                ctx,
+                                err
+                            );
+                        } else {
+                            this.#errorHandler(ctx, err);
                         }
                     }
                 }
-    
-                next();
-            })
+            }
 
+            next();
 
         } catch(err: unknown) {
 

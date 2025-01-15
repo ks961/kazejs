@@ -18,25 +18,34 @@ function parseUrlEncoded(body: string): Record<string, string> {
 export function parseBody() {
 
     return function(ctx: KazeContext, next: KazeNextFunction) {
-        const contentType = ctx.req.headers["content-type"];
-        if(!contentType) {
-            next();
-            return;
-        }
+        const contentType = ctx.req.headers["content-type"]?.toLowerCase();
 
-        try {
-            if(contentType === "application/x-www-form-urlencoded") {
-                ctx.req.body = parseUrlEncoded(ctx.req.rawBody.toString("utf8"));
-            } else if(contentType === "application/json") {
-                ctx.req.body = JSON.parse(ctx.req.rawBody.toString("utf8"));
-            } else {
-                ctx.req.body = null;
-            }
-        } catch {
-            ctx.req.body = null;
-        } finally {
-            next();
+        if (!contentType || !['POST', 'PUT', 'PATCH'].includes(ctx.req.method ?? "")) {
+            return next();
         }
+        
+        const chunks: Buffer[] = [];
+        ctx.req.on("data", (chunk: Buffer) => {
+            chunks.push(chunk);
+        });
+        
+        ctx.req.on("end", () => {
+            try {
+                const data = Buffer.concat(chunks).toString();
+                
+                if (contentType.includes("application/x-www-form-urlencoded")) {
+                    ctx.req.body = parseUrlEncoded(data);
+                } else if (contentType.includes("application/json")) {
+                    ctx.req.body = JSON.parse(data);
+                } else {
+                    ctx.req.body = null;
+                }
+            } catch (err) {
+                ctx.req.body = null;
+            } finally {
+                next();
+            }
+        });
     }
 }
 
@@ -52,7 +61,7 @@ export function jsonValidate<T extends ObjectValidator<any>>(
             });
         }
         
-        if(!ctx.req.rawBody) {
+        if(!ctx.req.body) {
             throw new Error(noJsonErrorMsg);
         }
 

@@ -53,14 +53,14 @@ export function fileUpload(options?: FileUploadOptions) {
         
         try {
             const boundary = contentType!.split("; ")[1].split("=").pop()!;
-            const parsedData = parseMultiPartData(
-                ctx.req.rawBody.toString("utf8"),
-                boundary,
-                options
-            );
+            // const parsedData = parseMultiPartData(
+            //     // ctx.req.rawBody.toString("utf8"),
+            //     boundary,
+            //     // options
+            // );
 
-            ctx.req.body = parsedData.fieldInfo;
-            ctx.req.files = parsedData.files;
+            // ctx.req.body = parsedData.fieldInfo;
+            // ctx.req.files = parsedData.files;
             
         } catch {
         } finally {            

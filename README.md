@@ -14,6 +14,7 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Async Request Handling**](#9-async-request-handling)
     - [**Jwt Support**](#10-jwt-support)
     - [**Cors Handling**](#11-cors-handling)
+    - [**File Upload**](#12-file-upload)
 
 ---
 

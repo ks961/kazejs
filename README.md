@@ -14,7 +14,6 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Async Request Handling**](#9-async-request-handling)
     - [**Jwt Support**](#10-jwt-support)
     - [**Cors Handling**](#11-cors-handling)
-    - [**File Upload**](#12-file-upload)
 
 ---
 
@@ -324,29 +323,5 @@ app.addGlobalMiddleware(cors({
 
 app.get("/api/endpoint", (ctx: KazeContext) => {
     ctx.res.send("hello");
-});
-```
-
-### 12. **File Upload**
-
-**File upload Example**:
-```typescript
-
-app.addGlobalMiddleware([
-    // It will handle both normal text field and file upload
-    // only for content-type: 'multipart/form-data'
-    fileUpload({
-        limit: 100,
-    })
-]);
-
-app.post("/submit", (ctx: KazeContext) => {
-    
-    if(ctx.req.files && ctx.req.files?.length > 0) {
-        console.log(ctx.req.files?.[0].fileSize);
-    }
-
-    console.log(ctx.req.body) // if there're normal fields
-    ctx.res.send("works");
 });
 ```

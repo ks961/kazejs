@@ -1,5 +1,6 @@
 import { getMimeType } from "@d3vtool/utils";
 import { KazeContext, KazeNextFunction } from "./kaze";
+import { writeFileSync } from "fs";
 
 export type FileSizeBytes = number;
 
@@ -9,7 +10,7 @@ export type KazeFile = {
     fieldName: string,
     fileName: string,
     fileSize: number,
-    fileBuffer: string,
+    fileBuffer: Buffer,
     mimeType: ReturnType<typeof getMimeType>,
 }
 
@@ -34,50 +35,6 @@ function parseMultiPartData(
         files: []
     };
     
-    const contents = body.split(boundary);
-    contents.shift(); // discard "--"
-    contents.pop(); // discard "--\r\n"
-    
-    for(let i = 0; i < contents.length; ++i) {
-        const contentInfo = contents[i].split("; ");
-        contentInfo.shift();
-    
-        if(contents[i].includes("filename")) {
-            const [fieldInfo, fileInfo] = contentInfo;
-            
-            const [ fileMetaData, fileContent ] = fileInfo.split("\r\n\r\n");            
-            const [ fileNameField, fileMimeType ] = fileMetaData.split("\r\n");
-            
-            if(
-                options?.limit && (fileContent.length > options?.limit) ||
-                (options?.acceptedMimeType && !(options.acceptedMimeType.includes(fileMimeType as any)))
-            ) {                
-                continue;
-            }
-            
-            const fieldValue = fieldInfo.split("=").pop()!;
-
-            const file: KazeFile = {
-                fieldName: options?.fileNameMutateFn ? 
-                    options?.fileNameMutateFn(fieldValue.replaceAll('\"', '')) : 
-                    fieldValue.replaceAll('\"', ''),
-                    
-                fileName: fileNameField.split("=").pop()!.replaceAll('\"', '')!,
-                fileSize: fileContent.length,
-                fileBuffer: fileContent.replace(/\r\n--$/, ""),
-                mimeType: fileMimeType.split(": ").pop()! as any,
-            }
-            
-            parsedData.files.push(file);
-        } else {
-            let [ fieldInfo, fieldData ] = contentInfo[0].split("\r\n\r\n").map(x => x.replace("\r\n--", ""));
-            
-            const fieldName = fieldInfo.split("=").pop()?.replaceAll('\"', "")!;
-            
-            parsedData.fieldInfo[fieldName] = fieldData;
-        }
-    }
-    
     return parsedData;
 }
 
@@ -97,7 +54,7 @@ export function fileUpload(options?: FileUploadOptions) {
         try {
             const boundary = contentType!.split("; ")[1].split("=").pop()!;
             const parsedData = parseMultiPartData(
-                ctx.req.rawBody,
+                ctx.req.rawBody.toString("utf8"),
                 boundary,
                 options
             );

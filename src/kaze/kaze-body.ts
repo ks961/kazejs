@@ -26,9 +26,9 @@ export function parseBody() {
 
         try {
             if(contentType === "application/x-www-form-urlencoded") {
-                ctx.req.body = parseUrlEncoded(ctx.req.rawBody);
+                ctx.req.body = parseUrlEncoded(ctx.req.rawBody.toString("utf8"));
             } else if(contentType === "application/json") {
-                ctx.req.body = JSON.parse(ctx.req.rawBody);
+                ctx.req.body = JSON.parse(ctx.req.rawBody.toString("utf8"));
             } else {
                 ctx.req.body = null;
             }

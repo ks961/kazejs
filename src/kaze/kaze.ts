@@ -15,7 +15,7 @@ interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     cookies?: Cookie,
     query?: Partial<Query>,
     params?: Partial<Params>,
-    rawBody: string,
+    rawBody: Buffer,
     body?: Body,
     files?: KazeFile[]
 }
@@ -437,16 +437,17 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                 params: params,
                 query: queriesMap,
                 secure: this.#isHttps,
-                rawBody: "",
+                rawBody: Buffer.alloc(0),
             });
         
+            let chunks: Buffer[] = [];
             request.on("data", (chunk: Buffer) => {
-                req.rawBody += chunk.toString();
+                chunks.push(chunk);
             });
 
 
             request.on("end", () => {
-                
+                req.rawBody = Buffer.concat(chunks);
                 const ctx: KazeContext<KazeDependencies> = {
                     dependencies,
                     req,

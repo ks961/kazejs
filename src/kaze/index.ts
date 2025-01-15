@@ -82,4 +82,6 @@ export {
     Cookie,
     parseJson,
     jsonValidate,
+    paramsValidate,
+    queryValidate,
 }

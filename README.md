@@ -169,7 +169,7 @@ app.static("public");
 ```typescript
 app.addGlobalMiddleware([
     parseCookies, // Middleware to parse cookies
-    parseBody()   // Middleware to parse incoming JSON body
+    parseBody()   // Middleware to parse incoming JSON or urlencoded body
 ]);
 
 // or add it one by one

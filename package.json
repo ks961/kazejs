@@ -21,7 +21,6 @@
     "global-error-handling",
     "route-grouping",
     "http-server",
-    "express-like",
     "typescript",
     "api-server",
     "validator",

@@ -116,7 +116,9 @@ app.get("/api/users/:id", async (ctx: KazeContext<typeof dependencies, { id: str
 ```typescript
 const ageSchema = Validator.object({
     // .parse() will handle the 'string' data and handle it as number dtype
-    age: Validator.number().greaterThanOrEqual(18, "Age must be greater than 18.").parse()
+    age: Validator.number()
+        .greaterThanOrEqual(18, "Age must be greater than 18.")
+        .parse()
 });
 
 app.get("/api/validate", queryValidate(ageSchema), (ctx: KazeContext<any, { age: number }>) => {
@@ -129,7 +131,9 @@ app.get("/api/validate", queryValidate(ageSchema), (ctx: KazeContext<any, { age:
 ```typescript
 const ageSchema = Validator.object({
     // .parse() will handle the 'string' data and handle it as number dtype
-    age: Validator.number().greaterThanOrEqual(18, "Age must be greater than 18.").parse() 
+    age: Validator.number()
+        .greaterThanOrEqual(18, "Age must be greater than 18.")
+        .parse() 
 });
 
 app.get("/api/:age", paramsValidate(ageSchema), (ctx: KazeContext<any, any, { age: number }>) => {
@@ -142,7 +146,9 @@ app.get("/api/:age", paramsValidate(ageSchema), (ctx: KazeContext<any, any, { ag
 ```typescript
 const ageSchema = Validator.object({
     // .parse() will handle the 'string' data and handle it as number dtype
-    age: Validator.number().greaterThanOrEqual(18, "Age must be greater than 18.").parse()
+    age: Validator.number()
+        .greaterThanOrEqual(18, "Age must be greater than 18.")
+        .parse()
 });
 
 app.get("/api/user", jsonValidate(ageSchema), (ctx: KazeContext<any, any, any, { age: number }>) => {

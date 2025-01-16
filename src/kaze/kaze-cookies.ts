@@ -55,10 +55,7 @@ export function parseCookies(ctx: KazeContext, next: KazeNextFunction) {
     const cookiesStr = ctx.req.headers["cookie"];
 
     if(!cookiesStr) {
-        const cookies = new Cookie({})
-        ctx.req.cookies = cookies;
-        next();
-        return;
+        return next();
     }
     
     const cPairs = cookiesStr.split("; ");

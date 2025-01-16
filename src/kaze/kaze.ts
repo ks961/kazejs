@@ -26,10 +26,7 @@ interface KazeResponse extends Omit<http.ServerResponse, "statusCode" | "setHead
     html: (htmlSource: string) => void;
     json: (jsonObj: Record<any, any>) => void;
     sendFile: (path: string) => Promise<void>;
-    setHeader: (
-        key: keyof http.IncomingHttpHeaders, 
-        value: string | string[]
-    ) => void;
+    setHeader: http.ServerResponse["setHeader"]
 
     addHeader: (
         key: keyof http.IncomingHttpHeaders, 
@@ -122,7 +119,6 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #responseSent: boolean = false;
     #errorHandler: ErrorHandlerFn;
     #validationFailedHandler: ValidationFailedFn;
-    #httpResponseHeaders: http.IncomingHttpHeaders;
     #staticDirPath: string = "";
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
@@ -137,8 +133,6 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         }
 
         this.#router = new Kaze.routerClass();
-        
-        this.#httpResponseHeaders = {};
 
         this.#isHttps = false;
 
@@ -288,14 +282,6 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         });
     }
 
-    // will overwrite the header on multiple calls with same key
-    #setHeader(
-        key: keyof http.IncomingHttpHeaders, 
-        value: string | string[],
-    ) {
-        this.#httpResponseHeaders[key] = value;
-    }
-
     async #checkFileExists(file: string) {
         try {
             const stats = await fs.lstat(file);
@@ -355,9 +341,8 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         const respHeaders = {
             "content-type": this.#mimeType,
             "content-length": this.#contentLength,
-            ...this.#httpResponseHeaders
         }
-        
+
         res.writeHead(
             this.#respStatusCode,
             respHeaders
@@ -461,7 +446,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                         await this.#sendFile(path);
                         this.#handleResponse(response);
                     },
-                    setHeader: this.#setHeader.bind(this),
+                    setHeader: response.setHeader,
                     statusCode: this.#statusCode.bind(this),
                     addHeader: (
                         key: keyof http.IncomingHttpHeaders, 
@@ -504,12 +489,12 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                     } catch(err: unknown) {
 
                         if(err instanceof KazeValidationError) {
-                            this.#validationFailedHandler(
+                            return this.#validationFailedHandler(
                                 ctx,
                                 err
                             );
                         } else {
-                            this.#errorHandler(ctx, err);
+                            return this.#errorHandler(ctx, err);
                         }
                     }
                 }
@@ -542,7 +527,6 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         this.#contentLength = 0;
         this.#responseData = "";
         this.#responseSent = false;
-        this.#httpResponseHeaders = {};
     }
 
     listen(

@@ -7,8 +7,9 @@ import { MapRouter } from "./kaze-map-router";
 import { DerivedRouters, DynamicRoute, DynamicRouteInfo, HttpMethods, Router } from "./kaze-router";
 import { transformErrorStackToHtml } from "./kaze-utils";
 import { KazeRouteError, KazeRouteNotFound, KazeValidationError } from "./kaze-errors";
-import { Cookie, CookieOptions, createCookie } from "./kaze-cookies";
-import { KazeFile } from "./kaze-fileupload";
+import { Cookie, CookieOptions, createCookie, parseCookies } from "./kaze-cookies";
+import { fileUpload, FileUploadOptions, KazeFile } from "./kaze-fileupload";
+import { parseBody } from "./kaze-body";
 
 interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     secure: boolean,
@@ -155,6 +156,18 @@ export class Kaze<KazeDependencies> implements HttpMethods {
 
     static Router(router: DerivedRouters = MapRouter): Router {
         return new router();
+    }
+
+    static parseCookie(): typeof parseCookies {
+        return parseCookies;
+    }
+
+    static parseBody(): ReturnType<typeof parseBody> {
+        return parseBody();
+    }
+
+    static fileUpload(options?: FileUploadOptions): ReturnType<typeof fileUpload> {
+        return fileUpload(options);
     }
 
     #loadStaticDirFiles(dirPath: string) {

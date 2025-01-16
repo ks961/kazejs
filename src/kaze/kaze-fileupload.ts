@@ -1,6 +1,5 @@
 import { getMimeType } from "@d3vtool/utils";
 import { KazeContext, KazeNextFunction } from "./kaze";
-import { writeFileSync } from "fs";
 
 export type FileSizeBytes = number;
 
@@ -20,24 +19,6 @@ export type FileUploadOptions = {
     acceptedMimeType?: ReturnType<typeof getMimeType>[],
 }
 
-export type ParsedData = {
-    files: KazeFile[],
-    fieldInfo: Record<string, string>,
-}
-
-function parseMultiPartData(
-    body: string,
-    boundary: string,
-    options?: FileUploadOptions
-): ParsedData {
-    const parsedData: ParsedData = {
-        fieldInfo: {},
-        files: []
-    };
-    
-    return parsedData;
-}
-
 export function fileUpload(options?: FileUploadOptions) {
 
     return function(ctx: KazeContext, next: KazeNextFunction) {
@@ -47,24 +28,92 @@ export function fileUpload(options?: FileUploadOptions) {
             !contentType ||
             !contentType?.includes("multipart/form-data")
         ) {
-            next();
-            return;
+            return next();
         }
         
-        try {
-            const boundary = contentType!.split("; ")[1].split("=").pop()!;
-            // const parsedData = parseMultiPartData(
-            //     // ctx.req.rawBody.toString("utf8"),
-            //     boundary,
-            //     // options
-            // );
+        let chunks: Buffer[] = [];
+        ctx.req.on("data", (chunk: Buffer) => {
+            chunks.push(chunk);
+        });
+        
 
-            // ctx.req.body = parsedData.fieldInfo;
-            // ctx.req.files = parsedData.files;
+        ctx.req.on("end", () => {
+            const body = Buffer.concat(chunks);
+
+            const boundary = ctx.req.headers['content-type']!.split('boundary=')[1];
+            const boundaryString = `--${boundary}`;
+      
+            const bodyStr = body.toString('binary');
+      
+            const parts = bodyStr.split(boundaryString);
+
+            const [withFilename, withoutFilename] = parts.reduce<[string[], string[]]>(
+                ([withFilename, withoutFilename], part) => {
+                  if (part.includes('filename')) {
+                    withFilename.push(part);
+                  } else {
+                    withoutFilename.push(part);
+                  }
+                  return [withFilename, withoutFilename];
+                }, [[], []]);
             
-        } catch {
-        } finally {            
+            if (withFilename.length > 0) {
+                ctx.req.files = [];
+                for(let idx = 0; idx < withFilename.length; ++idx) {
+                    const [ fileInfoStr, _] = withFilename[idx].split("\r\n\r\n");
+                    const fileInfo = fileInfoStr.split("\r\n");
+                    fileInfo.shift(); // discard '' empty str;
+                    const [ contentDispositionStr, contentType ] = fileInfo;
+                    
+                    const fieldName = contentDispositionStr.match(/name="([^"]+)"/)![1];
+                    const fileName = contentDispositionStr.match(/filename="([^"]+)"/)![1];
+
+                    const mimeType = contentType.split(": ").pop()! as any;
+                    
+                    const fileDataStart = withFilename[idx].indexOf('\r\n\r\n') + 4;
+                    const fileDataEnd = withFilename[idx].lastIndexOf('\r\n');
+                                        
+                    const startIndex = bodyStr.indexOf(withFilename[idx]) + fileDataStart;
+                    const endIndex = bodyStr.indexOf(withFilename[idx]) + fileDataEnd;
+                    
+                    const fileSize = endIndex - startIndex;
+
+                    if(
+                        options?.limit && fileSize > options.limit ||
+                        options?.acceptedMimeType && !options.acceptedMimeType.includes(mimeType)
+                    ) {
+                        continue;
+                    }
+                    
+                    const fileBuffer = body.subarray(startIndex, endIndex);
+                    
+                    const file: KazeFile = {
+                        fieldName,
+                        fileName: options?.fileNameMutateFn ? 
+                            options.fileNameMutateFn(fileName) : fileName,
+                        fileSize,
+                        fileBuffer,
+                        mimeType, 
+                    }
+
+                    ctx.req.files?.push(file);
+                }
+            }
+
+            if(withoutFilename.length > 0) {
+                ctx.req.body = {};
+                withoutFilename.shift();
+                withoutFilename.pop();
+                for(let idx = 0; idx < withoutFilename.length; ++idx) {
+                    let [ fieldInfoStr, fieldData] = withoutFilename[idx].split("\r\n\r\n");
+                    
+                    const fieldName = fieldInfoStr.match(/name="([^"]+)"/)![1];
+                    fieldData = fieldData.replaceAll("\r\n", "");
+                    ctx.req.body[fieldName] = fieldData;
+                }
+            }
+
             next();
-        }
+        });
     }
 }

@@ -14,6 +14,7 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Async Request Handling**](#9-async-request-handling)
     - [**Jwt Support**](#10-jwt-support)
     - [**Cors Handling**](#11-cors-handling)
+    - [**File Upload**](#12-file-upload)
 
 ---
 
@@ -167,8 +168,8 @@ app.static("public");
 **Global Middleware Example**:  
 ```typescript
 app.addGlobalMiddleware([
-    parseCookies, // Middleware to parse cookies
-    parseBody()   // Middleware to parse incoming JSON or urlencoded body
+    Kaze.parseCookies(), // Middleware to parse cookies
+    Kaze.parseBody()   // Middleware to parse incoming JSON or urlencoded body
 ]);
 
 // or add it one by one
@@ -323,5 +324,40 @@ app.addGlobalMiddleware(cors({
 
 app.get("/api/endpoint", (ctx: KazeContext) => {
     ctx.res.send("hello");
+});
+```
+
+---
+
+### 12. **File Upload**
+
+**File upload Example**:
+```typescript
+
+app.addGlobalMiddleware([
+    // It will also handle both normal input field and "single/multi" file upload
+    // only for content-type: 'multipart/form-data'
+
+    /**
+     * FileUploadOptions = {
+     *     limit?: FileSizeBytes ( number ),
+     *     fileNameMutateFn?: FilenameMutateFn,
+     *     acceptedMimeType?: ReturnType<typeof getMimeType>[] ( string[] ),
+     * }
+    */
+    Kaze.fileUpload({
+        limit: 100, // optional
+    });
+]);
+
+app.post("/submit", (ctx: KazeContext) => {
+    
+    if(ctx.req.files && ctx.req.files?.length > 0) {
+        console.log(ctx.req.files?.[0].fileName);
+        console.log(ctx.req.files?.[0].fileSize);
+    }
+
+    console.log(ctx.req.body) // if there're normal input fields
+    ctx.res.send("works");
 });
 ```

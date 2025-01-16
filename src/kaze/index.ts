@@ -53,6 +53,7 @@ import {
 import {
     fileUpload,
     KazeFile,
+    FilenameMutateFn,
     FileUploadOptions
 } from "./kaze-fileupload";
 
@@ -92,5 +93,6 @@ export {
     queryValidate,
     fileUpload,
     type KazeFile,
+    type FilenameMutateFn,
     type FileUploadOptions
 }

@@ -124,7 +124,6 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #validationFailedHandler: ValidationFailedFn;
     #httpResponseHeaders: http.IncomingHttpHeaders;
     #staticDirPath: string = "";
-    #staticFileMap = new Map<string, StaticFile>();
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
     static routerClass: DerivedRouters;
@@ -170,31 +169,8 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         return fileUpload(options);
     }
 
-    #loadStaticDirFiles(dirPath: string) {
-        const dirListing = readdirSync(dirPath);
-        for(const item of dirListing) {
-            const fullPath = path.join(dirPath, item);
-            const itemStat = statSync(fullPath);
-            if(itemStat.isFile()) {
-                const data = readFileSync(fullPath);
-                const filePath = fullPath.replace(
-                    path.normalize(`${this.#staticDirPath}/`), 
-                    ""
-                ); // removing the static dir name
-
-                this.#staticFileMap.set(filePath, {
-                    data,
-                    mimeType: getMimeType(item.split(".")[1])
-                });
-            } else if(itemStat.isDirectory()) {
-                this.#loadStaticDirFiles(path.join(dirPath, item));
-            }
-        }
-    }
-
     static(dirPath: string) {
         this.#staticDirPath = dirPath;
-        this.#loadStaticDirFiles(dirPath);
     }
 
     addGlobalMiddleware(middleware: KazeRouteHandler | KazeRouteHandler[]) {
@@ -320,12 +296,27 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         this.#httpResponseHeaders[key] = value;
     }
 
+    async #checkFileExists(file: string) {
+        try {
+            const stats = await fs.lstat(file);
+            return stats.isFile();
+        } catch {
+            return false;
+        }
+    }
+
+    async #readFile(filePath: string): Promise<string> {  
+        const data = await fs.readFile(filePath, {encoding: "utf8"});
+
+        return data;
+    }
+
     async #sendFile(path: string): Promise<void> {
         const extension = path.split("/").pop()?.split(".")[1];
 
         this.#mimeType = getMimeType(extension!)
 
-        const body = await fs.readFile(path, {encoding: "utf8"});
+        const body = await this.#readFile(path);
         
         this.#contentLength = Buffer.byteLength(body);
         this.#responseData = body;
@@ -380,18 +371,19 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         return this.#handle.bind(this);
     }
 
-    #handleStaticFile(filePath: string, response: http.ServerResponse) {
-        const staticFile = this.#staticFileMap.get(filePath)!;
+   async #handleStaticFile(filePath: string, response: http.ServerResponse) {
+        const data = await this.#readFile(filePath);
+        const extension = filePath.split("/").pop()!.split(".").pop();
 
         this.#statusCode(200);
-        this.#mimeType = staticFile.mimeType;
-        this.#responseData = staticFile.data;
-        this.#contentLength = Buffer.byteLength(staticFile.data);
+        this.#mimeType = getMimeType(extension!);
+        this.#responseData = data;
+        this.#contentLength = Buffer.byteLength(data);
 
         this.#handleResponse(response);
     }
 
-    #handle(
+    async #handle(
         request: http.IncomingMessage, 
         response: http.ServerResponse,
         dependencies?: KazeDependencies
@@ -405,9 +397,11 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         const routes = route.split("/").slice(1);
         const filePath = path.join(...routes);
 
-        if ((reqMethod === "GET" || reqMethod === "HEAD") && this.#staticFileMap.has(filePath)) {            
-            this.#handleStaticFile(filePath, response);            
-            return;
+        const fullPath = path.join(this.#staticDirPath, filePath);
+        
+        const isExists = await this.#checkFileExists(fullPath);
+        if (isExists) {
+            return this.#handleStaticFile(fullPath, response);
         }
 
         try {

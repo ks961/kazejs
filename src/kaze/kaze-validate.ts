@@ -55,7 +55,7 @@ export function queryValidate<T extends ObjectValidator<any>>(
 
         const schemaTypes = schema.extractTypes()
        
-        ctx.req.query = parseBySchemaType(ctx.req.query, schemaTypes);        
+        ctx.req.query = parseBySchemaType(ctx.req.query, schemaTypes);
         
         next();
     }
@@ -84,6 +84,10 @@ export function paramsValidate<T extends ObjectValidator<any>>(
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
         }
+
+        const schemaTypes = schema.extractTypes();
+       
+        ctx.req.params = parseBySchemaType(ctx.req.params, schemaTypes);
 
         next();
     }

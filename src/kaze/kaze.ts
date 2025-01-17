@@ -1,7 +1,6 @@
 import http from "http";
 import path from "path";
 import fs from "fs/promises";
-import { readdirSync, readFileSync, statSync } from "fs";
 import { getMimeType } from "@d3vtool/utils";
 import { MapRouter } from "./kaze-map-router";
 import { DerivedRouters, DynamicRoute, DynamicRouteInfo, HttpMethods, Router } from "./kaze-router";
@@ -523,10 +522,18 @@ export class Kaze<KazeDependencies> implements HttpMethods {
 
     #resetServerState() {
         this.#statusCode(200);
-        this.#mimeType = "text/plain";
         this.#contentLength = 0;
         this.#responseData = "";
         this.#responseSent = false;
+        this.#mimeType = "text/plain";
+    }
+
+    port() {
+        return this.#port;
+    }
+
+    close() {
+        this.#server.close();
     }
 
     listen(

@@ -249,36 +249,35 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         this.#router.all(route, ...reqHandler);
     }
 
-    routeGrp(pRoute: KazeRoute, routes: Router) {
-        AcceptedMethods.forEach(method => {
-            if(routes instanceof MapRouter) {
-                this.#appendToMapRouter(method, pRoute, routes);
-            }
-        });
+    routeGrp(parentRoute: KazeRoute, router: Router) {
+        if(router instanceof MapRouter) {
+            this.#appendToMapRouter(parentRoute, router);
+        }
     }
 
     #appendToMapRouter(
-        method: KazeHttpMethod,
-        pRoute: KazeRoute, 
-        routes: MapRouter
+        parentRoute: KazeRoute, 
+        router: MapRouter
     ) {
-        const normalRoutes = routes.fetchRoutes();
-        normalRoutes.get(method)?.forEach((
-            handlers: KazeRouteHandler[], 
-            route: KazeRoute
-        ) => {
-            const fullRoute = route !== "/" ? `${pRoute}${route}` : pRoute; 
-            this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...handlers)
-        });
+        AcceptedMethods.forEach(method => {
+            const normalRoutes = router.fetchRoutes();
+            normalRoutes.get(method)?.forEach((
+                handlers: KazeRouteHandler[],
+                route: KazeRoute
+            ) => {
+                const fullRoute = parentRoute === "/" ? route :  route === "/" ? parentRoute : `${parentRoute}${route}`;
+                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...handlers);
+            });
 
-        const dynamicRoutes = routes.fetchDynamicRoutes();
-        dynamicRoutes.get(method)?.forEach((
-            dynRouteInfo: DynamicRouteInfo,
-            _: DynamicSegmentLength
-        ) => {
-            const fullRoute = dynRouteInfo.fullRoute !== "/" ? `${pRoute}${dynRouteInfo.fullRoute}` : pRoute;
-            this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...dynRouteInfo.handlers)
-        });
+            const dynamicRoutes = router.fetchDynamicRoutes();
+            dynamicRoutes.get(method)?.forEach((
+                dynRouteInfo: DynamicRouteInfo,
+                _: DynamicSegmentLength
+            ) => {
+                const fullRoute = parentRoute === "/" ? dynRouteInfo.fullRoute : dynRouteInfo.fullRoute === "/" ? parentRoute : `${parentRoute}${dynRouteInfo.fullRoute}`;
+                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...dynRouteInfo.handlers);
+            })
+        })
     }
 
     async #checkFileExists(file: string) {

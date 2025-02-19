@@ -55,7 +55,7 @@ export class MapRouter extends Router {
     }
     
     get(route: string, ...handlers: KazeRouteHandler[]): void {
-        const isDynamicRoute = route.includes("/:");
+        const isDynamicRoute = route.includes("/:") || route.includes("/*");
 
         if(!isDynamicRoute) {
             this.#routeMap.get("GET")?.set(route, handlers);
@@ -294,6 +294,7 @@ export class MapRouter extends Router {
             if(!dynSegInfo) {
                 return;
             }
+            
             const dynSegStartIdx = routeSegments.length - dynSegInfo.dynSeg.length;
 
             const paramsMap: Record<string, string> = {};

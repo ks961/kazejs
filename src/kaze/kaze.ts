@@ -260,13 +260,14 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         router: MapRouter
     ) {
         AcceptedMethods.forEach(method => {
+            const middlewares = router.fetchMiddlewares();
             const normalRoutes = router.fetchRoutes();
             normalRoutes.get(method)?.forEach((
                 handlers: KazeRouteHandler[],
                 route: KazeRoute
             ) => {
-                const fullRoute = parentRoute === "/" ? route :  route === "/" ? parentRoute : `${parentRoute}${route}`;
-                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...handlers);
+                const fullRoute = parentRoute === "/" ? route :  route === "/" ? parentRoute : `${parentRoute}${route}`;                
+                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...middlewares, ...handlers);
             });
 
             const dynamicRoutes = router.fetchDynamicRoutes();
@@ -275,7 +276,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                 _: DynamicSegmentLength
             ) => {
                 const fullRoute = parentRoute === "/" ? dynRouteInfo.fullRoute : dynRouteInfo.fullRoute === "/" ? parentRoute : `${parentRoute}${dynRouteInfo.fullRoute}`;
-                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...dynRouteInfo.handlers);
+                this.#router[method.toLowerCase() as keyof HttpMethods](fullRoute, ...middlewares, ...dynRouteInfo.handlers);
             })
         })
     }

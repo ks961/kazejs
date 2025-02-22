@@ -22,6 +22,8 @@ export class MapRouter extends Router {
     #dynamicRouteMap: Map<KazeHttpMethod, DynamicRouteMap> = 
         new Map<KazeHttpMethod, DynamicRouteMap>();
 
+    #middlewares: KazeRouteHandler[] = [];
+
     constructor() {
         super();
         AcceptedMethods.forEach(method => {
@@ -271,6 +273,14 @@ export class MapRouter extends Router {
             }
             this.#dynamicRouteMap.get(method)?.set(dynRouteSeg.routeSegments.length, dynRouteInfo);
         })
+    }
+
+    middlewares(...handlers: KazeRouteHandler[]): void {        
+        this.#middlewares = handlers;
+    }
+
+    fetchMiddlewares(): KazeRouteHandler[] {
+        return [...this.#middlewares];
     }
 
     fetchRoutes(): Map<KazeHttpMethod, RouteMap> {

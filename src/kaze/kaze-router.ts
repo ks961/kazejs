@@ -41,6 +41,9 @@ export abstract class Router implements HttpMethods {
     abstract unlink(route: string, ...handlers: KazeRouteHandler[]): void;
     abstract all(route: string, ...handlers: KazeRouteHandler[]): void;
 
+    abstract middlewares(...handlers: KazeRouteHandler[]): void;
+    abstract fetchMiddlewares(): KazeRouteHandler[];
+
     abstract fetchHandlers(
         route: string,
         reqMethod: KazeHttpMethod,

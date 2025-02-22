@@ -57,6 +57,8 @@ import {
     FileUploadOptions
 } from "./kaze-fileupload";
 
+import { FileRouter } from "./kaze-file-router";
+
 export {
     Kaze,
     Validator,
@@ -94,5 +96,6 @@ export {
     fileUpload,
     type KazeFile,
     type FilenameMutateFn,
-    type FileUploadOptions
+    type FileUploadOptions,
+    FileRouter,
 }

@@ -36,6 +36,7 @@ export class FileRouter extends Router {
                 if(
                     info.isDirectory()
                 ) {
+                    
                     if(dir.startsWith("[")){                
                         await this.indexDirectoryRoutes(fullpath, {
                             path: fullpath,
@@ -58,6 +59,8 @@ export class FileRouter extends Router {
         
                     if(pathInfo.type === "dynamic") {
                         route = route.replaceAll(/\[([^\]]+)\]/g, ':$1');
+                    } else if(route.includes("/#")) {                       
+                        route = route.replaceAll("/#", '/*');
                     }
         
                     let middlewareModule = {};

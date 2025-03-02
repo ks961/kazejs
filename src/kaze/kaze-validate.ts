@@ -29,7 +29,7 @@ export function parseBySchemaType(
     return parsedData;
 }
 
-export function queryValidate<T extends ObjectValidator<any>>(
+export function queryValidate<T extends ObjectValidator<Record<string, any>>>(
     schema: T,
     noQueryErrorMsg: string = "No queries found to validate"
 ) {
@@ -61,7 +61,7 @@ export function queryValidate<T extends ObjectValidator<any>>(
     }
 }
 
-export function paramsValidate<T extends ObjectValidator<any>>(
+export function paramsValidate<T extends ObjectValidator<Record<string, any>>>(
     schema: T,
     noParamsErrorMsg: string = "No params found to validate"
 ) {

@@ -106,6 +106,11 @@ export type KazeOptions<KazeDependencies> = {
     dependencies?: KazeDependencies
 }
 
+export type ListenCallback = (
+    err?: NodeJS.ErrnoException | null, 
+    address?: string | { address: string; family: string; port: number }
+) => void;
+
 export class Kaze<KazeDependencies> implements HttpMethods {
     #router: Router;
     #isHttps: boolean;
@@ -538,7 +543,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
 
     listen(
         port: number,
-        listeningListener?: VoidFunction
+        listeningListener?: ListenCallback
     ) {
 
         this.#port = port;

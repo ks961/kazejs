@@ -49,7 +49,7 @@ export function parseBody() {
     }
 }
 
-export function jsonValidate<T extends ObjectValidator<any>>(
+export function jsonValidate<T extends ObjectValidator<Record<string, any>>>(
     schema: T,
     noJsonErrorMsg: string = "No json found to validate"
 ) {

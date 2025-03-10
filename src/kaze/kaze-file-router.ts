@@ -52,7 +52,13 @@ export class FileRouter extends Router {
                     info.isFile() && (path.basename(fullpath) === "route.ts" || path.basename(fullpath) === "route.js")
                 ) {
                     
-                    const module = await import(fullpath);
+                    let routeCode: any = {};
+                    try {
+                        routeCode = await import(fullpath);
+                    } catch {
+                        routeCode = require(fullpath);
+                    }
+
                     let route = fullpath.replace(this.#routerDirPath, "").replaceAll("\\", "/").replace("/route.ts", "");
                     
                     route = route.replaceAll(/\/\(.*?\)/g, '');
@@ -78,8 +84,8 @@ export class FileRouter extends Router {
                         return acc;
                     }, [] as KazeRouteHandler[]);
         
-                    for(const methodName in module) {
-                        (this.#mapRouter as any)[methodName.toLowerCase()](route, ...middlewareFns, module[methodName]);
+                    for(const methodName in routeCode) {
+                        (this.#mapRouter as any)[methodName.toLowerCase()](route, ...middlewareFns, routeCode[methodName]);
                     }
                 }
             }

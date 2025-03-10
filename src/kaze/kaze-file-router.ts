@@ -51,15 +51,20 @@ export class FileRouter extends Router {
                 } else if(
                     info.isFile() && (path.basename(fullpath) === "route.ts" || path.basename(fullpath) === "route.js")
                 ) {
-                    
+                     
                     let routeCode: any = {};
                     try {
                         routeCode = await import(fullpath);
                     } catch {
                         routeCode = require(fullpath);
                     }
+                    
+                    let route = fullpath.replace(this.#routerDirPath, "")
+                        .replaceAll("\\", "/")
+                        .replace(/route\.(?:ts|js)$/, "");
 
-                    let route = fullpath.replace(this.#routerDirPath, "").replaceAll("\\", "/").replace("/route.ts", "");
+                    
+                    route = route.replace(/\/$/, "");
                     
                     route = route.replaceAll(/\/\(.*?\)/g, '');
         
@@ -71,8 +76,8 @@ export class FileRouter extends Router {
         
                     let middlewareModule = {};
                     
-                    const middlewarePath: string = fullpath.replace(/routes\.(ts|js)$/, 'middleware.$1');
-
+                    const middlewarePath: string = fullpath.replace(/route\.(ts|js)$/, 'middleware.$1');
+                    
                     try {
                         await fs.access(middlewarePath, fs.constants.R_OK);
                     
@@ -91,6 +96,7 @@ export class FileRouter extends Router {
         
                     for(const methodName in routeCode) {
                         if(methodName === "default") continue;
+                        
                         (this.#mapRouter as any)[methodName.toLowerCase()](route, ...middlewareFns, routeCode[methodName]);
                     }
                 }

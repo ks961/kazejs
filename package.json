@@ -46,7 +46,7 @@
     "vitest": "^3.0.2"
   },
   "dependencies": {
-    "@d3vtool/secid": "^1.1.6",
+    "@d3vtool/secid": "^1.1.7",
     "@d3vtool/utils": "^6.5.5"
   },
   "files": [

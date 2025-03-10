@@ -400,7 +400,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
             }
             
             let params: Record<string, string> = {};
-            let routeHandlers = this.#router.fetchHandlers(route, reqMethod);
+            let routeHandlers = await this.#router.fetchHandlers(route, reqMethod);
 
             if(
                 typeof routeHandlers === "object" && 
@@ -411,7 +411,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
             }
             
             if(routeHandlers === undefined) {
-                routeHandlers = this.#router.fetchHandlers("*", reqMethod);
+                routeHandlers =  await this.#router.fetchHandlers("*", reqMethod);
                 
                 if(routeHandlers === undefined) {
                     throw new KazeRouteNotFound(`Route '${route}' not found.`);

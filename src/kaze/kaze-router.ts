@@ -47,7 +47,7 @@ export abstract class Router implements HttpMethods {
     abstract fetchHandlers(
         route: string,
         reqMethod: KazeHttpMethod,
-    ): KazeRouteHandler[] | DynamicRoute | undefined;
+    ): Promise<KazeRouteHandler[] | DynamicRoute | undefined>;
 }
 
 export type DerivedRouters = new () => Router;

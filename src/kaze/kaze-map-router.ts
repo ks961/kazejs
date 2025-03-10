@@ -291,10 +291,10 @@ export class MapRouter extends Router {
         return this.#dynamicRouteMap;
     }
 
-    fetchHandlers(
+    async fetchHandlers(
         route: string,
         reqMethod: KazeHttpMethod
-    ): KazeRouteHandler[] | DynamicRoute | undefined {
+    ): Promise<KazeRouteHandler[] | DynamicRoute | undefined> {
         let handlers = this.#routeMap.get(reqMethod)?.get(route);
         if(!handlers) {
             const routeSegments = route.split("/");

@@ -6,12 +6,13 @@ import fs from "node:fs/promises";
 
 type FileRouteInfo = {
     path: string,
-    type: "normal" | "dynamic"
+    type: "normal" | "dynamic" | "lazy-dynamic-load"
 }
 
 export class FileRouter extends Router {
 
     #mapRouter = new MapRouter();
+    #lazyDynamicLoadFileMap = new Map<string, string>();
     #routerDirPath: string = path.join(process.cwd(), "routes");
 
     constructor() {
@@ -42,6 +43,11 @@ export class FileRouter extends Router {
                             path: fullpath,
                             type: "dynamic"
                         });
+                    } else if(dir.startsWith("@")) {
+                        await this.indexDirectoryRoutes(fullpath, {
+                            path: fullpath,
+                            type: "lazy-dynamic-load"
+                        });
                     } else {
                         await this.indexDirectoryRoutes(fullpath, {
                             path: fullpath,
@@ -53,11 +59,8 @@ export class FileRouter extends Router {
                 ) {
                      
                     let routeCode: any = {};
-                    try {
-                        routeCode = await import(fullpath);
-                    } catch {
-                        routeCode = require(fullpath);
-                    }
+
+                    routeCode = await this.#importOrRequire(fullpath);
                     
                     let route = fullpath.replace(this.#routerDirPath, "")
                         .replaceAll("\\", "/")
@@ -67,6 +70,19 @@ export class FileRouter extends Router {
                     route =  route.length > 1 ? route.replace(/\/$/, "") : route;
                     
                     route = route.replaceAll(/\/\(.*?\)/g, '');
+
+                    if(pathInfo.type === "lazy-dynamic-load") {
+                        route = route.replaceAll("@", "");
+                        this.#lazyDynamicLoadFileMap.set(route, fullpath);
+
+                        const middlewarePath: string = fullpath.replace(/route\.(ts|js)$/, 'middleware.$1');
+                        try {
+                            await fs.access(middlewarePath, fs.constants.R_OK);
+                            this.#lazyDynamicLoadFileMap.set(`m-${route}`, middlewarePath);
+                        } catch {};
+
+                        return;
+                    }
         
                     if(pathInfo.type === "dynamic") {
                         route = route.replaceAll(/\[([^\]]+)\]/g, ':$1');
@@ -81,18 +97,11 @@ export class FileRouter extends Router {
                     try {
                         await fs.access(middlewarePath, fs.constants.R_OK);
                     
-                        try {
-                            middlewareModule = await import(middlewarePath);
-                        } catch {
-                            middlewareModule = require(middlewarePath);
-                        }
+                        middlewareModule = await this.#importOrRequire(middlewarePath);
                     
                     } catch {};
             
-                    const middlewareFns = Object.keys(middlewareModule).reduce((acc, key) => {
-                        acc.push((middlewareModule as any)[key]);
-                        return acc;
-                    }, [] as KazeRouteHandler[]);
+                    const middlewareFns = Object.values(middlewareModule) as KazeRouteHandler[];
         
                     for(const methodName in routeCode) {
                         if(methodName === "default") continue;
@@ -135,13 +144,43 @@ export class FileRouter extends Router {
     middlewares(...handlers: KazeRouteHandler[]): void {
     }
 
+    async #importOrRequire(path: string, deleteCache: boolean = false) {
+        if(deleteCache) {
+            const clearedPath = require.resolve(path);
+            delete require.cache[clearedPath];
+        }
+
+        try {
+            return await import(path);
+        } catch {
+            return require(path);
+        }
+    };
+
     fetchMiddlewares(): KazeRouteHandler[] {
         return this.#mapRouter.fetchMiddlewares();
     }
 
-    fetchHandlers(route: string, reqMethod: KazeHttpMethod): KazeRouteHandler[] | DynamicRoute | undefined {
-        route = (route.length > 1 && route.endsWith("/")) ? route.slice(0, -1) : route;       
-        return this.#mapRouter.fetchHandlers(route, reqMethod);
+    async fetchHandlers(route: string, reqMethod: KazeHttpMethod): Promise<KazeRouteHandler[] | DynamicRoute | undefined> {
+        route = (route.length > 1 && route.endsWith("/")) ? route.slice(0, -1) : route;
+
+        const fullpath = this.#lazyDynamicLoadFileMap.get(route);
+        
+        if(!fullpath) {
+            return this.#mapRouter.fetchHandlers(route, reqMethod);
+        }
+        
+        const middlewarePath = this.#lazyDynamicLoadFileMap.get(`m-${route}`);
+        let middlewareCode: any = [];
+
+        if (middlewarePath) {
+            const middleware = await this.#importOrRequire(middlewarePath);
+            middlewareCode = middleware ? Object.values(middleware) : [];
+        }
+        
+        const routeCode = await this.#importOrRequire(fullpath, true);
+
+        return [...middlewareCode, routeCode[reqMethod.toUpperCase()]];
     }
 
 }

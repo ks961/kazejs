@@ -64,7 +64,7 @@ export class FileRouter extends Router {
                         .replace(/route\.(?:ts|js)$/, "");
 
                     
-                    route = route.replace(/\/$/, "");
+                    route =  route.length > 1 ? route.replace(/\/$/, "") : route;
                     
                     route = route.replaceAll(/\/\(.*?\)/g, '');
         
@@ -140,6 +140,7 @@ export class FileRouter extends Router {
     }
 
     fetchHandlers(route: string, reqMethod: KazeHttpMethod): KazeRouteHandler[] | DynamicRoute | undefined {
+        route = (route.length > 1 && route.endsWith("/")) ? route.slice(0, -1) : route;       
         return this.#mapRouter.fetchHandlers(route, reqMethod);
     }
 

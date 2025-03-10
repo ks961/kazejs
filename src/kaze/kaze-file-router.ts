@@ -49,7 +49,7 @@ export class FileRouter extends Router {
                         });
                     }
                 } else if(
-                    info.isFile() && path.basename(fullpath) === "route.ts"
+                    info.isFile() && (path.basename(fullpath) === "route.ts" || path.basename(fullpath) === "route.js")
                 ) {
                     
                     const module = await import(fullpath);
@@ -69,7 +69,9 @@ export class FileRouter extends Router {
                     try {
                         await fs.access(middlewarePath, fs.constants.R_OK);
                         middlewareModule = await import(middlewarePath);
-                    } catch {};
+                    } catch {
+                        middlewareModule = require(middlewarePath);
+                    }
             
                     const middlewareFns = Object.keys(middlewareModule).reduce((acc, key) => {
                         acc.push((middlewareModule as any)[key]);

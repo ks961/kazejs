@@ -74,10 +74,14 @@ export class FileRouter extends Router {
     
                     try {
                         await fs.access(middlewarePath, fs.constants.R_OK);
-                        middlewareModule = await import(middlewarePath);
-                    } catch {
-                        middlewareModule = require(middlewarePath);
-                    }
+                    
+                        try {
+                            middlewareModule = await import(middlewarePath);
+                        } catch {
+                            middlewareModule = require(middlewarePath);
+                        }
+                    
+                    } catch {};
             
                     const middlewareFns = Object.keys(middlewareModule).reduce((acc, key) => {
                         acc.push((middlewareModule as any)[key]);

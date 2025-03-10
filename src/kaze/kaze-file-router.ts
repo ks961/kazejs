@@ -85,11 +85,12 @@ export class FileRouter extends Router {
                     }, [] as KazeRouteHandler[]);
         
                     for(const methodName in routeCode) {
+                        if(methodName === "default") continue;
                         (this.#mapRouter as any)[methodName.toLowerCase()](route, ...middlewareFns, routeCode[methodName]);
                     }
                 }
             }
-        } catch {
+        } catch {   
             throw new Error(`Dir Read Error: Directory ${this.#routerDirPath}.`);
         }
     }

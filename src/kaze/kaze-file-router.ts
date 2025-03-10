@@ -49,7 +49,7 @@ export class FileRouter extends Router {
                         });
                     }
                 } else if(
-                    info.isFile() && path.basename(fullpath) === "route.ts" && path.basename(fullpath) === "route.js"
+                    info.isFile() && (path.basename(fullpath) === "route.ts" || path.basename(fullpath) === "route.js")
                 ) {
                     
                     const module = await import(fullpath);

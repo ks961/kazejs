@@ -1,19 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2022",               // Use ES2022 features
-    "module": "ESNext",               // Use ES modules (dynamic import, top-level await)
-    "moduleResolution": "node",       // Use Node-style module resolution (recommended for most Node.js libraries)
-    "declaration": true,              // Generate declaration files (.d.ts)
-    "outDir": "./dist",               // Output directory for compiled files
-    "rootDir": "src/kaze",                 // The root directory for source files
-    "strict": true,                   // Enable strict type checking options
-    "esModuleInterop": true,          // Enable interoperability with CommonJS modules
-    "isolatedModules": true,          // Ensure all files can be transpiled independently
-    "skipLibCheck": true,             // Skip type checking of declaration files
-    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names
-    "allowJs": true,                  // Allow JavaScript files (if you want to mix JS with TS)
-    "resolveJsonModule": true         // Allow importing JSON files as modules
+    "target": "ES2020", 
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationDir": "./dist/types", 
+    "rootDir": "./src",
+    "module": "ESNext",  // For ESM output
+    "lib": ["esnext"]
   },
-  "include": ["src/kaze/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

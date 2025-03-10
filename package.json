@@ -1,12 +1,16 @@
 {
   "name": "@d3vtool/kazejs",
   "version": "1.9.6",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "source": "src/kaze/index.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
   "scripts": {
-    "tsc": "tsc --watch",
-    "build": "tsc && esbuild ./dist/**/*.js --minify --outdir=./dist --allow-overwrite",
-    "dev": "nodemon dist/index.js",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "minify:esm": "esbuild dist/esm/**/*.js --minify --outdir=dist/esm --allow-overwrite",
+    "minify:cjs": "esbuild dist/cjs/**/*.js --minify --outdir=dist/esm --allow-overwrite",
+    "build": "npm run build:esm && npm run build:cjs && npm run minify:esm && npm run minify:cjs",
     "test": "vitest"
   },
   "keywords": [
@@ -44,7 +48,7 @@
   },
   "dependencies": {
     "@d3vtool/secid": "^1.1.6",
-    "@d3vtool/utils": "^6.4.16"
+    "@d3vtool/utils": "^6.5.5"
   },
   "files": [
     "dist"

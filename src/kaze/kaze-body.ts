@@ -1,7 +1,6 @@
-import { ObjectValidator } from "@d3vtool/utils/dist/validator/ObjectValidator";
+import { ObjectValidator } from "@d3vtool/utils";
 import { KazeContext, KazeNextFunction } from "./kaze";
 import { KazeValidationError } from "./kaze-errors";
-import { parseBySchemaType } from "./kaze-validate";
 
 function parseUrlEncoded(body: string): Record<string, string> {
     const bodyData = body.split("&");
@@ -73,9 +72,15 @@ export function jsonValidate<T extends ObjectValidator<Record<string, any>>>(
             throw new KazeValidationError(errors);
         }
 
-        const schemaTypes = schema.extractTypes();
-       
-        ctx.req.body = parseBySchemaType(ctx.req.body, schemaTypes);
+
+        try {
+            ctx.req.body = JSON.parse(ctx.req.body);
+        } catch (err) {
+            const msg = `Invalid JSON: ${(err instanceof Error) ? err.message : "JSON body is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
+        }
 
         next();
     }

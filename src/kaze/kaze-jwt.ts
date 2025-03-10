@@ -4,12 +4,12 @@ import {
     createIssueAt
 } from "@d3vtool/utils";
 import { 
-    BadJwtClaim, 
+    BadJwtClaim,
     BadJwtHeader, 
     DirtyJwtSignature,
     ExpiredJwt, 
     InvalidJwt,
-} from "@d3vtool/utils/dist/jwt/errors";
+} from "@d3vtool/utils";
 
 export {
     signJwt,

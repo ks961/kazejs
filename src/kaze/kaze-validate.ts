@@ -1,33 +1,13 @@
-import { KazeContext, KazeNextFunction } from "./kaze";
+import { ObjectValidator } from "@d3vtool/utils";
 import { KazeValidationError } from "./kaze-errors";
-import { AcceptedObjVTypes, ObjectValidator } from "@d3vtool/utils/dist/validator/ObjectValidator";
+import { KazeContext, KazeNextFunction } from "./kaze";
 import {
     Validator, 
     VInfer, 
     ValidationError, 
     ObjectValidationError,
 
-} from "@d3vtool/utils"; 
-
-export function parseBySchemaType(
-    data: Record<string, string>, 
-    schemaTypes: Record<string, Object | AcceptedObjVTypes>
-) {
-    
-    const parsedData = Object.keys(data).reduce((acc, key) => {
-        if(schemaTypes[key] === "number") {
-            acc[key] = parseInt(data[key])
-        } else if(schemaTypes[key] instanceof Object) {
-            const deepParsedData = parseBySchemaType((data as any)[key], schemaTypes[key] as any);
-            acc[key] = deepParsedData;
-        } else {
-            acc[key] = data[key];
-        }
-        return acc;
-    }, {} as Record<string, unknown>);
-
-    return parsedData;
-}
+} from "@d3vtool/utils";
 
 export function queryValidate<T extends ObjectValidator<Record<string, any>>>(
     schema: T,
@@ -53,9 +33,15 @@ export function queryValidate<T extends ObjectValidator<Record<string, any>>>(
             throw new KazeValidationError(errors);
         }
 
-        const schemaTypes = schema.extractTypes()
-       
-        ctx.req.query = parseBySchemaType(ctx.req.query, schemaTypes);
+
+        try {
+            ctx.req.query = JSON.parse(ctx.req.query as any);
+        } catch (err) {
+            const msg = `Invalid Query: ${(err instanceof Error) ? err.message : "Query structure is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
+        }
         
         next();
     }
@@ -84,10 +70,15 @@ export function paramsValidate<T extends ObjectValidator<Record<string, any>>>(
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
         }
-
-        const schemaTypes = schema.extractTypes();
        
-        ctx.req.params = parseBySchemaType(ctx.req.params, schemaTypes);
+        try {
+            ctx.req.params = JSON.parse(ctx.req.params as any);
+        } catch (err) {
+            const msg = `Invalid Params: ${(err instanceof Error) ? err.message : "Params body is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
+        }
 
         next();
     }

@@ -70,8 +70,9 @@ export class FileRouter extends Router {
                     }
         
                     let middlewareModule = {};
-                    const middlewarePath = fullpath.replace("route.ts", "middleware.ts");
-    
+                    
+                    const middlewarePath: string = fullpath.replace(/routes\.(ts|js)$/, 'middleware.$1');
+
                     try {
                         await fs.access(middlewarePath, fs.constants.R_OK);
                     

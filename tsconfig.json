@@ -7,11 +7,11 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "declaration": true,
-    "declarationDir": "./dist/types", 
-    "rootDir": "./src",
+    "declarationDir": "./dist/types",
+    "rootDir": "./src/kaze",
     "module": "ESNext",  // For ESM output
     "lib": ["esnext"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/kaze/**/*"],
+  "exclude": ["node_modules", "dist", "public", "routes"]
 }

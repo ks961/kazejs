@@ -144,10 +144,13 @@ export class FileRouter extends Router {
     middlewares(...handlers: KazeRouteHandler[]): void {
     }
 
+    // continue working on lazy load file
     async #importOrRequire(path: string, deleteCache: boolean = false) {
         if(deleteCache) {
+            
             const clearedPath = require.resolve(path);
             delete require.cache[clearedPath];
+            console.log(require.cache[clearedPath]);
         }
 
         try {

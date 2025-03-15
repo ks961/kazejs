@@ -8,8 +8,9 @@ import {
     ObjectValidationError,
 
 } from "@d3vtool/utils";
+import { TAllDataValidators } from "@d3vtool/utils/dist/types/validator/types";
 
-export function queryValidate<T extends ObjectValidator<Record<string, any>>>(
+export function queryValidate<T extends ObjectValidator<Record<string, TAllDataValidators>>>(
     schema: T,
     noQueryErrorMsg: string = "No queries found to validate"
 ) {
@@ -47,7 +48,7 @@ export function queryValidate<T extends ObjectValidator<Record<string, any>>>(
     }
 }
 
-export function paramsValidate<T extends ObjectValidator<Record<string, any>>>(
+export function paramsValidate<T extends ObjectValidator<Record<string, TAllDataValidators>>>(
     schema: T,
     noParamsErrorMsg: string = "No params found to validate"
 ) {

@@ -1,6 +1,7 @@
 import { ObjectValidator } from "@d3vtool/utils";
 import { KazeContext, KazeNextFunction } from "./kaze";
 import { KazeValidationError } from "./kaze-errors";
+import { TAllDataValidators } from "@d3vtool/utils/dist/types/validator/types";
 
 function parseUrlEncoded(body: string): Record<string, string> {
     const bodyData = body.split("&");
@@ -48,7 +49,7 @@ export function parseBody() {
     }
 }
 
-export function jsonValidate<T extends ObjectValidator<Record<string, any>>>(
+export function jsonValidate<T extends ObjectValidator<Record<string, TAllDataValidators>>>(
     schema: T,
     noJsonErrorMsg: string = "No json found to validate"
 ) {

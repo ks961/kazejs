@@ -8,7 +8,7 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Routing [ static | dynamic ]**](#1-routing--static--dynamic-)
     - [**Route Grouping [ static | dynamic ]**](#2-route-grouping--static--dynamic-)
     - [**Middleware support**](#3-middleware-support)
-    - [**Dependency injection**](#4-dependency-injection)
+    - [**Dependency injection (Optional)**](#4-dependency-injection)
     - [**Schema validation [ query | params | json-body ]**](#5-schema-validation--query--params--json-body-)
     - [**Static file serving**](#6-static-file-serving)
     - [**Global middleware support**](#7-global-middleware-support)

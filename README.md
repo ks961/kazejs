@@ -17,6 +17,12 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Jwt Support**](#10-jwt-support)
     - [**Cors Handling**](#11-cors-handling)
     - [**File Upload**](#12-file-upload)
+    - [**Rendering Engine**](#13-rendering-engine)
+
+---
+
+- **Coming Soon**
+    - **File Routing [ static | dynamic ]**
 
 ---
 
@@ -369,3 +375,65 @@ app.post("/submit", (ctx: KazeContext) => {
     ctx.res.send("works");
 });
 ```
+
+---
+
+### 13. **Rendering Engine**
+
+Kaze custom rendering engines, enabling dynamic template rendering with data binding and template rendering flexibility. This feature allows for greater control over how the HTML is rendered in response to requests.
+
+#### **Rendering Engine Integration**
+
+To integrate and use the custom rendering engine with Kaze, you can define a rendering engine function and register it with the Kaze application.
+
+**Example of Rendering Engine Definition**:
+```typescript
+// can be async engine [ if needed to read files inside ].
+function yourEngine(rctx: KazeRendererContext, template: string, data?: Record<string, any>): HTMLSource | Promise<HTMLSource> { 
+    // Replace placeholder text in the template
+    template = template.replace("DocumentXYZ", "Engine Based").replace("not works", "works");
+
+    // Iterate through the provided data and replace placeholders in the template
+    for (const key in data) {
+        template = template.replaceAll(`{{${key}}}`, data[key]); // will replace {{key}} with value in data[key]
+    }
+    return template;
+}
+```
+
+In this example, the `engine` function takes a `KazeRendererContext`, the `template` string, and an optional `data` object. It replaces any placeholders in the template (such as `{{name}}`) with the provided data, allowing dynamic content rendering.
+
+#### **Registering the Rendering Engine**
+
+Once you have defined the rendering engine function, you can register it with Kaze to handle rendering requests:
+
+```typescript
+app.renderEngine(yourEngine, path.join(__dirname, "views"), {
+    fileExtension: "eng"
+});
+```
+
+This registers the custom rendering engine with Kaze and sets the directory path where the template files are located. It also specifies the file extension of the templates (e.g., `.html`).
+
+#### **Rendering a Template**
+
+To render a template, you can use the `ctx.res.render()` method inside your route handlers. The `render()` method allows you to specify a template name and the data to be injected into the template.
+
+**Example of Rendering a Template**:
+```typescript
+app.get("/", (ctx: KazeContext) => {
+    // Render the "index" template with dynamic data
+    ctx.res.render("index", {
+        name: "From KazeJs"
+    });
+});
+```
+
+In this example, the `index` template is rendered, and the placeholder `{{name}}` in the template is replaced with the string "From KazeJs".
+
+#### **Kaze Renderer Context Types**
+
+The `KazeRendererContext` provides information about the template being rendered and the rendering environment. It includes:
+
+- `filepath`: The path to the current template file being rendered.
+- `renderEngineDirPath`: The directory path of the rendering engine's templates.

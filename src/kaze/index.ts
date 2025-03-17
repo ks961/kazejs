@@ -1,7 +1,8 @@
 import { 
     Kaze, 
     KazeContext, 
-    KazeNextFunction
+    KazeNextFunction,
+    type KazeRendererContext,
 } from "./kaze";
 import {
     Validator,
@@ -64,7 +65,8 @@ export {
     Validator,
     type VInfer,
     ValidationError,
-    Router, 
+    Router,
+    type KazeRendererContext, 
     type DerivedRouters, 
     type HttpMethods,
     ObjectValidationError,

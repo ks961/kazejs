@@ -25,6 +25,7 @@ interface KazeResponse extends Omit<http.ServerResponse, "statusCode" | "setHead
     html: (htmlSource: string) => void;
     json: (jsonObj: Record<any, any>) => void;
     sendFile: (path: string) => Promise<void>;
+    render: (file: string, data?: Record<string, any>) => Promise<void>
     setHeader: http.ServerResponse["setHeader"]
 
     addHeader: (
@@ -111,6 +112,23 @@ export type ListenCallback = (
     address?: string | { address: string; family: string; port: number }
 ) => void;
 
+type HTMLSource = string;
+export type KazeRendererContext = {
+    filepath: string,
+    renderEngineDirPath: string
+}
+export type KazeRenderEngine = 
+    (rctx: KazeRendererContext, template: string, data?: Record<string, any>) => HTMLSource | Promise<HTMLSource>;
+export type KazeRenderEngineOptions = {
+    fileExtension: string
+}
+
+type RenderingEngineInfo = {
+    renderEngine: KazeRenderEngine,
+    renderingEngineOptions?: KazeRenderEngineOptions,
+    renderEngineDirPath: KazeRendererContext["renderEngineDirPath"],
+}
+
 export class Kaze<KazeDependencies> implements HttpMethods {
     #router: Router;
     #isHttps: boolean;
@@ -124,6 +142,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #errorHandler: ErrorHandlerFn;
     #validationFailedHandler: ValidationFailedFn;
     #staticDirPath: string = "";
+    #renderingEngineInfo: RenderingEngineInfo;
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
     static routerClass: DerivedRouters;
@@ -142,6 +161,11 @@ export class Kaze<KazeDependencies> implements HttpMethods {
 
         this.#errorHandler = this.#defaultErrorHandler;
         this.#validationFailedHandler = this.#defaultVFailedHandler;
+
+        this.#renderingEngineInfo = {
+            renderEngineDirPath: "",
+            renderEngine: (rctx: KazeRendererContext, template: string, _?: Record<string, any>) => template,
+        }
 
         this.#server = http.createServer((
             req: http.IncomingMessage, 
@@ -167,8 +191,18 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         return fileUpload(options);
     }
 
-    static(dirPath: string) {
-        this.#staticDirPath = dirPath;
+    static(directoryPath: string) {
+        this.#staticDirPath = directoryPath;
+    }
+
+    renderEngine(
+        engine: KazeRenderEngine,
+        directoryPath: string, 
+        options: KazeRenderEngineOptions
+    ) {
+        this.#renderingEngineInfo.renderEngine = engine;
+        this.#renderingEngineInfo.renderingEngineOptions = options;
+        this.#renderingEngineInfo.renderEngineDirPath = directoryPath;
     }
 
     addGlobalMiddleware(middleware: KazeRouteHandler | KazeRouteHandler[]) {
@@ -332,6 +366,20 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         this.#responseData = data;
     }
 
+   async #render(file: string, data?: Record<string, any>) {
+        const filepath = path.join(
+            this.#renderingEngineInfo.renderEngineDirPath, 
+            this.#renderingEngineInfo.renderingEngineOptions?.fileExtension ? 
+                `${file}.${this.#renderingEngineInfo.renderingEngineOptions?.fileExtension}` : file
+        );
+        const templateData = await this.#readFile(filepath);
+        const htmlSource = await this.#renderingEngineInfo.renderEngine({
+            filepath,
+            renderEngineDirPath: this.#renderingEngineInfo.renderEngineDirPath
+        }, templateData, data);
+        return htmlSource;
+    }
+
     #statusCode(code: number) {
         this.#respStatusCode = code;
     }
@@ -445,6 +493,24 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                     html: (htmlSource: string) => {
                         this.#html(htmlSource);
                         this.#handleResponse(response);
+                    },
+                    render: async(file: string, data?: Record<string, any>) => {
+                        try {
+                            const htmlSource = await this.#render(file, data);
+                            this.#html(htmlSource);
+                        } catch(error: unknown) {
+                            if(error instanceof Error) {
+                                this.#html(
+                                    transformErrorStackToHtml(error.stack ?? error.message)
+                                );
+                            } else {
+                                this.#html(
+                                    transformErrorStackToHtml("Something went wrong with rendering engine.")
+                                );
+                            }
+                        } finally {
+                            this.#handleResponse(response);
+                        }
                     },
                     sendFile: async(path: string) => {
                         await this.#sendFile(path);

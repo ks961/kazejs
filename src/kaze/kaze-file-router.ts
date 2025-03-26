@@ -6,7 +6,7 @@ import fs from "node:fs/promises";
 
 type FileRouteInfo = {
     path: string,
-    type: "normal" | "dynamic" | "lazy-dynamic-load"
+    type: "normal" | "dynamic-param";
 }
 
 export class FileRouter extends Router {
@@ -24,6 +24,19 @@ export class FileRouter extends Router {
         });
     }
 
+    async #getMiddlewareAt(
+        middlewarePath: string
+    ): Promise<KazeRouteHandler[]> {
+        try {
+            await fs.access(middlewarePath, fs.constants.R_OK);
+        
+            const middlewareFns = await this.#importOrRequire(middlewarePath);
+            return Object.values(middlewareFns);
+        } catch {};
+
+        return [];
+    }
+
     async indexDirectoryRoutes(rootDir: string, pathInfo: FileRouteInfo) {
         try {
 
@@ -37,16 +50,11 @@ export class FileRouter extends Router {
                 if(
                     info.isDirectory()
                 ) {
-                    
+
                     if(dir.startsWith("[")){                
                         await this.indexDirectoryRoutes(fullpath, {
                             path: fullpath,
-                            type: "dynamic"
-                        });
-                    } else if(dir.startsWith("@")) {
-                        await this.indexDirectoryRoutes(fullpath, {
-                            path: fullpath,
-                            type: "lazy-dynamic-load"
+                            type: "dynamic-param"
                         });
                     } else {
                         await this.indexDirectoryRoutes(fullpath, {
@@ -70,39 +78,35 @@ export class FileRouter extends Router {
                     route =  route.length > 1 ? route.replace(/\/$/, "") : route;
                     
                     route = route.replaceAll(/\/\(.*?\)/g, '');
-
-                    if(pathInfo.type === "lazy-dynamic-load") {
-                        route = route.replaceAll("@", "");
-                        this.#lazyDynamicLoadFileMap.set(route, fullpath);
-
-                        const middlewarePath: string = fullpath.replace(/route\.(ts|js)$/, 'middleware.$1');
-                        try {
-                            await fs.access(middlewarePath, fs.constants.R_OK);
-                            this.#lazyDynamicLoadFileMap.set(`m-${route}`, middlewarePath);
-                        } catch {};
-
-                        return;
-                    }
         
-                    if(pathInfo.type === "dynamic") {
+                    const middlewareFns: KazeRouteHandler[] = [];
+                    if(pathInfo.type === "dynamic-param") {
                         route = route.replaceAll(/\[([^\]]+)\]/g, ':$1');
-                    } else if(route.includes("/#")) {                       
-                        route = route.replaceAll("/#", '/*');
+                    } else if(route.includes("/@")) {        
+                        const regex = /\/@[\w]+/g;
+                        const dyns = route.matchAll(regex).map(dyn => dyn[0]);
+                        route = route.replaceAll(regex, '/*');
+
+                        for(const dyn of dyns) {
+                            const pathFix = path.join(dyn, "");
+                            const dynPath = path.join(fullpath.split(pathFix)[0], dyn, "middleware");
+                            
+                            let middlewares = await this.#getMiddlewareAt(dynPath + ".js");
+                            if(middlewares.length === 0) {
+                                middlewares = await this.#getMiddlewareAt(dynPath + ".ts");
+                            }
+                            
+                            middlewareFns.push(...middlewares);
+                        }
                     }
-        
-                    let middlewareModule = {};
                     
                     const middlewarePath: string = fullpath.replace(/route\.(ts|js)$/, 'middleware.$1');
                     
-                    try {
-                        await fs.access(middlewarePath, fs.constants.R_OK);
-                    
-                        middlewareModule = await this.#importOrRequire(middlewarePath);
-                    
-                    } catch {};
-            
-                    const middlewareFns = Object.values(middlewareModule) as KazeRouteHandler[];
-        
+                    if(!route.includes("/*")) {
+                        const middlewares = await this.#getMiddlewareAt(middlewarePath);
+                        middlewareFns.push(...middlewares);
+                    }
+
                     for(const methodName in routeCode) {
                         if(methodName === "default") continue;
                         
@@ -145,14 +149,7 @@ export class FileRouter extends Router {
     }
 
     // continue working on lazy load file
-    async #importOrRequire(path: string, deleteCache: boolean = false) {
-        if(deleteCache) {
-            
-            const clearedPath = require.resolve(path);
-            delete require.cache[clearedPath];
-            console.log(require.cache[clearedPath]);
-        }
-
+    async #importOrRequire(path: string) {
         try {
             return await import(path);
         } catch {
@@ -181,7 +178,7 @@ export class FileRouter extends Router {
             middlewareCode = middleware ? Object.values(middleware) : [];
         }
         
-        const routeCode = await this.#importOrRequire(fullpath, true);
+        const routeCode = await this.#importOrRequire(fullpath);
 
         return [...middlewareCode, routeCode[reqMethod.toUpperCase()]];
     }

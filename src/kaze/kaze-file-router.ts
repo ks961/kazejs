@@ -50,8 +50,11 @@ export class FileRouter extends Router {
                 if(
                     info.isDirectory()
                 ) {
-
+                    
                     if(dir.startsWith("[")){                
+                        if(dir.includes("@")) {
+                            throw new Error(`Invalid route name: ${dir}`);
+                        }
                         await this.indexDirectoryRoutes(fullpath, {
                             path: fullpath,
                             type: "dynamic-param"

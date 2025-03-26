@@ -18,11 +18,7 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
     - [**Cors Handling**](#11-cors-handling)
     - [**File Upload**](#12-file-upload)
     - [**Rendering Engine**](#13-rendering-engine)
-
----
-
-- **Coming Soon**
-    - **File Routing [ static | dynamic ]**
+    - [**FileRouting [ Static | Dynamic | Middleware ]**](#14-filerouting--static--dynamic--middleware-)
 
 ---
 
@@ -202,7 +198,8 @@ app.globalErrorHandler((ctx: KazeContext, err: unknown) => {
     if(err instanceof YourCustomThrownError) {
         // handle it respectively
     } else {
-        ctx.res.status(500).send({ error: "Internal Server Error" });
+        ctx.res.statusCode(500)
+        ctx.res.send({ error: "Internal Server Error" });
     }
 });
 
@@ -210,7 +207,8 @@ app.globalErrorHandler((ctx: KazeContext, err: unknown) => {
 app.globalVErrorHandler((ctx: KazeContext, err: KazeValidationError) => {
 
     console.log(err.vErrors); // Schema keys with their error messages
-    ctx.res.status(400).json({ error: err.message });
+    ctx.res.statusCode(400)
+    ctx.res.json({ error: err.message });
 });
 ```
 
@@ -437,3 +435,245 @@ The `KazeRendererContext` provides information about the template being rendered
 
 - `filepath`: The path to the current template file being rendered.
 - `renderEngineDirPath`: The directory path of the rendering engine's templates.
+
+---
+
+Here's how you can add the new information about FileRouting to your README docs, following the same style as your previous entries:
+
+---
+
+### 14. **FileRouting [ Static | Dynamic | Middleware ]**
+
+**FileRouting Overview**:  
+FileRouting allows you to define routes and middlewares by organizing them inside directories. The route and middleware behavior is determined by the structure of the directories and files.
+
+**File Routing Convention**:  
+- **Wildcard Route**:  
+  A directory with the name starting with `@` is treated as a wildcard route, which must be a directory name.
+  - Example: `@` or `@some-name`
+
+- **Static Route**:  
+  A directory with a simple name is treated as a static pathname route.
+  - Example: `product`
+
+- **Path Parameter Route**:  
+  A directory name enclosed in square brackets `[]` is treated as a path parameter route.
+  - Example: `[id]`
+
+- **Invalid Route Name**:  
+  Any route defined as `[@]` or `[@any-name]` will throw an error:  
+  `Invalid route name: ${dir}`
+
+**File Types Inside Directories**:  
+There are two types of files that can be created inside these directories:
+
+- **`route.ts`**:  
+  This file handles all HTTP methods for the given route. So all function declared inside
+  must be HTTP METHOD in 'uppercase'.
+  
+- **`middleware.ts`**:  
+  This file handles middleware for that particular route. Middleware runs before the route logic in `route.ts`.
+
+---
+
+#### **To Setup**
+```typescript
+import { FileRouter, Kaze } from "@d3vtool/kazejs";
+
+
+const app = new Kaze({
+    router: FileRouter // important
+});
+
+// you can define error handler or validation error handler using
+// 'app.globalErrorHandler'
+// 'app.globalVErrorHandler'
+
+app.listen(3000);
+```
+
+---
+
+#### **Directory Structure**
+
+```plaintext
+project-path/
+│
+├── routes/
+│   ├── @auth/
+│   │   ├── middleware.ts        # Middleware for authentication
+│   │   └── route.ts             # Authentication-related routes (login, signup)
+│   │
+│   ├── @products/
+│   │   ├── middleware.ts        # Product-related middleware (permission check, etc.)
+│   │   ├── route.ts             # Product-related routes (GET, POST /products)
+│   │   └── [id]/                # Dynamic route for products by ID (e.g., /products/:id)
+│   │       └── route.ts         # Route handler for /products/:id
+│   │
+│   ├── @orders/
+│   │   ├── middleware.ts        # Order-related middleware (auth, validation)
+│   │   ├── route.ts             # Orders-related routes (POST /orders)
+│   │   └── [id]/                # Dynamic route for orders by ID (e.g., /orders/:id)
+│   │       └── route.ts         # Route handler for /orders/:id
+│   │
+│   ├── @users/
+│   │   ├── middleware.ts        # User-related middleware (input validation)
+│   │   └── route.ts             # User routes (GET, POST /users)
+│   │
+│   └── middleware.ts            # Global middleware (logging, error handling, etc.)
+│
+└── app.ts                       # Main application file where routes are registered
+```
+
+---
+
+#### **Code Examples**
+
+---
+
+##### **Authentication Middleware (`routes/@auth/middleware.ts`)**
+
+```typescript
+// routes/@auth/middleware.ts
+
+import { Context, KazeNextFunction } from "@d3vtool/kazejs";
+
+// Middleware to check if the user is authenticated
+export function authenticate(ctx: Context, next: KazeNextFunction) {
+    const token = ctx.req.headers.authorization;
+
+    if (!token) {
+        ctx.res.statusCode(401);
+        return ctx.res.json({ message: "Authorization required" });
+    }
+
+    try {
+        // Simulate JWT verification (this should be a real JWT verification logic)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        ctx.state.user = decoded;  // Attach the decoded user info to the request context
+        return next();
+    } catch (err) {
+        ctx.res.statusCode(401);
+        return ctx.res.json({ message: "Invalid token" });
+    }
+}
+```
+
+---
+
+##### **Authentication Route (`routes/@auth/route.ts`)**
+
+```typescript
+// routes/@auth/route.ts
+
+import { KazeContext } from "@d3vtool/kazejs";
+
+// Handle login request (e.g., POST /@auth/login)
+export function POST(ctx: KazeContext) {
+    const { username, password } = ctx.req.body;
+
+    // Simulate user authentication (use a real authentication service in a real app)
+    if (username === "admin" && password === "password123") {
+        ctx.res.json({ message: "Login successful", token: "fake-jwt-token" });
+    } else {
+        ctx.res.statusCode(401);
+        ctx.res.json({ message: "Invalid credentials" });
+    }
+}
+```
+
+---
+
+##### **Product Route (`routes/@products/route.ts`)**
+
+```typescript
+// routes/@products/route.ts
+
+import { KazeContext } from "@d3vtool/kazejs";
+import { Product } from "models/product";  // Assuming there's a Product model
+
+// Handle creating a new product (e.g., POST /@products)
+export function POST(ctx: KazeContext) {
+    const { name, price } = ctx.req.body;
+
+    // Validate product data
+    if (!name || !price) {
+        ctx.res.statusCode(400);
+        return ctx.res.json({ message: "Name and price are required" });
+    }
+
+    // Simulate saving the product (in a real app, save to database)
+    const newProduct = new Product({ name, price });
+    newProduct.save();
+
+    ctx.res.statusCode(201);
+    ctx.res.json({ message: "Product created", product: newProduct });
+}
+
+// Handle getting all products (e.g., GET /@products)
+export function GET(ctx: KazeContext) {
+    // Simulate fetching products (in a real app, fetch from a database)
+    const products = Product.findAll();
+
+    ctx.res.statusCode(200);
+    ctx.res.json({ products });
+}
+```
+
+---
+
+##### **Product Dynamic Route (`routes/@products/[id]/route.ts`)**
+
+```typescript
+// routes/@products/[id]/route.ts
+
+import { KazeContext } from "@d3vtool/kazejs";
+import { Product } from "models/product";  // Assuming there's a Product model
+
+// Handle getting a product by ID (e.g., GET /@products/:id)
+export function GET(ctx: KazeContext) {
+    const { id } = ctx.req.params;
+
+    // Simulate fetching the product by ID (use a real database in a real app)
+    const product = Product.findById(id);
+
+    if (!product) {
+        ctx.res.statusCode(404);
+        return ctx.res.json({ message: "Product not found" });
+    }
+
+    ctx.res.statusCode(200);
+    ctx.res.json({ product });
+}
+```
+
+---
+
+##### **Global Middleware (`routes/middleware.ts`)**
+
+```typescript
+// routes/middleware.ts
+
+import { Context, KazeNextFunction } from "@d3vtool/kazejs";
+
+// Example of a global middleware for logging requests
+export function logRequests(ctx: Context, next: KazeNextFunction) {
+    console.log(`[${new Date().toISOString()}] ${ctx.req.method} ${ctx.req.url}`);
+    next();
+}
+```
+---
+
+### **Summary of How It Works**
+
+1. **Global Middleware (`logRequests`)**: Logs every incoming request to the console.
+2. **Authentication Middleware (`authenticate`)**: Ensures that requests to certain routes are authenticated.
+3. **Routes**:
+   - `/@auth`: Handles login and authentication (using `POST`).
+   - `/@products`: Handles product management, such as creating and retrieving products.
+   - `/@products/:id`: Retrieves a specific product based on its ID.
+
+In this setup, you have:
+- Global middleware that applies to all routes.
+- Middleware specific to authentication, which only applies to routes that require it.
+- Route definitions that correspond to real API endpoints, organized by resource (auth, products, etc.).

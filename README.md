@@ -500,23 +500,20 @@ app.listen(3000);
 project-path/
 │
 ├── routes/
-│   ├── @auth/
-│   │   ├── middleware.ts        # Middleware for authentication
-│   │   └── route.ts             # Authentication-related routes (login, signup)
 │   │
-│   ├── @products/
+│   ├── products/
 │   │   ├── middleware.ts        # Product-related middleware (permission check, etc.)
 │   │   ├── route.ts             # Product-related routes (GET, POST /products)
 │   │   └── [id]/                # Dynamic route for products by ID (e.g., /products/:id)
 │   │       └── route.ts         # Route handler for /products/:id
 │   │
-│   ├── @orders/
+│   ├── orders/
 │   │   ├── middleware.ts        # Order-related middleware (auth, validation)
 │   │   ├── route.ts             # Orders-related routes (POST /orders)
 │   │   └── [id]/                # Dynamic route for orders by ID (e.g., /orders/:id)
 │   │       └── route.ts         # Route handler for /orders/:id
 │   │
-│   ├── @users/
+│   ├── users/
 │   │   ├── middleware.ts        # User-related middleware (input validation)
 │   │   └── route.ts             # User routes (GET, POST /users)
 │   │

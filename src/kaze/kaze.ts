@@ -1,6 +1,6 @@
-import http from "http";
-import path from "path";
-import fs from "fs/promises";
+import http from "node:http";
+import path from "node:path";
+import fs from "node:fs/promises";
 import { getMimeType } from "@d3vtool/utils";
 import { MapRouter } from "./kaze-map-router";
 import { DerivedRouters, DynamicRoute, DynamicRouteInfo, HttpMethods, Router } from "./kaze-router";
@@ -9,6 +9,7 @@ import { KazeRouteError, KazeRouteNotFound, KazeValidationError } from "./kaze-e
 import { Cookie, CookieOptions, createCookie, parseCookies } from "./kaze-cookies";
 import { fileUpload, FileUploadOptions, KazeFile } from "./kaze-fileupload";
 import { parseBody } from "./kaze-body";
+import { TConstructor } from "./kaze-route-decorators";
 
 interface KazeRequest<Query, Params, Body> extends http.IncomingMessage {
     secure: boolean,
@@ -80,8 +81,8 @@ export type DynamicRouteMap = Map<DynamicSegmentLength, DynamicRouteInfo>;
 export type RequestHandle = 
     (request: http.IncomingMessage, response: http.ServerResponse) => void;
 
-type ErrorHandlerFn = (ctx: KazeContext<any>, error: unknown) => void | Promise<void>;
-type ValidationFailedFn = (ctx: KazeContext<any>, error: KazeValidationError) => void | Promise<void>;
+export type ErrorHandlerFn = (ctx: KazeContext<any>, error: unknown) => void | Promise<void>;
+export type ValidationFailedFn = (ctx: KazeContext<any>, error: KazeValidationError) => void | Promise<void>;
 
 export const AcceptedMethods: Set<KazeHttpMethod> = new Set([
     "GET",
@@ -104,6 +105,7 @@ export type StaticFile = {
 
 export type KazeOptions<KazeDependencies> = {
     router?: DerivedRouters,
+    class?: boolean,
     dependencies?: KazeDependencies
 }
 
@@ -142,6 +144,9 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     #errorHandler: ErrorHandlerFn;
     #validationFailedHandler: ValidationFailedFn;
     #staticDirPath: string = "";
+    #isClassBased: boolean = false;
+    #errorMap: Record<string, ErrorHandlerFn> = {};
+    #vErrorMap: Record<string, ValidationFailedFn> = {};
     #renderingEngineInfo: RenderingEngineInfo;
     #globalMiddlewares = new Set<KazeRouteHandler>();
 
@@ -149,7 +154,12 @@ export class Kaze<KazeDependencies> implements HttpMethods {
     
     constructor(options?: KazeOptions<KazeDependencies>) {
 
-        Kaze.routerClass = options?.router ?? MapRouter;
+        if(options?.class) {
+            this.#isClassBased = true;
+            Kaze.routerClass = MapRouter;
+        } else {
+            Kaze.routerClass = options?.router ?? MapRouter;
+        }
 
         if (typeof Kaze.routerClass !== 'function') {
             throw new Error('Invalid router class');
@@ -292,6 +302,142 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         if(router instanceof MapRouter) {
             this.#appendToMapRouter(parentRoute, router);
         }
+    }
+
+    #getStaticMethods(cls: TConstructor) {
+        return Object.getOwnPropertyNames(cls)
+            .filter((item) => typeof (cls as any)[item] === "function")
+    }
+
+    #getPossibleMatchingRoutes(
+        route: string,
+        map: Record<string, any>
+    ) {
+        const routeSeg = route.split("/");
+        const viableERoutes = [];
+        
+        for(const errorRoute in map) {
+            const eRouteSeg = errorRoute.split("/");
+            if(errorRoute.includes("/:") && eRouteSeg.length === routeSeg.length) {
+                viableERoutes.unshift(errorRoute);
+            } else if(route.includes(errorRoute)) {
+                viableERoutes.push(errorRoute);
+            }
+        }
+
+        return viableERoutes;
+    }
+
+    #anyErrorHandler(
+        ctx: KazeContext,
+        error: unknown
+    ) {
+        const route = ctx.req.url as string;
+        
+        let errorHandler = this.#errorMap[route];
+        
+        if(errorHandler) {
+            return errorHandler(ctx, error);
+        }
+
+        const viableERoutes = this.#getPossibleMatchingRoutes(
+            route,
+            this.#errorMap
+        );
+
+        for(let vRoute of viableERoutes) {
+            errorHandler = this.#errorMap[vRoute];
+            if(errorHandler) {
+                return errorHandler(ctx, error);
+            }
+        }
+
+        this.#defaultErrorHandler(ctx, error);
+    }
+
+    #vErrorHandler(
+        ctx: KazeContext,
+        error: KazeValidationError
+    ) {
+        const route = ctx.req.url as string;
+        
+        let errorHandler = this.#vErrorMap[route];
+        
+        if(errorHandler) {
+            return errorHandler(ctx, error);
+        }
+
+        const viableERoutes = this.#getPossibleMatchingRoutes(
+            route,
+            this.#vErrorMap
+        );
+
+        for(let vRoute of viableERoutes) {
+            errorHandler = this.#vErrorMap[vRoute];
+
+            if(errorHandler) {
+                return errorHandler(ctx, error);
+            }
+        }
+
+        this.#defaultVFailedHandler(ctx, error);        
+    }
+
+    controller(
+        controller: TConstructor
+    ) {
+        if(!this.#isClassBased) return;
+        const parentRoute = (controller as any).parentRoute ?? "/";
+        const parentMiddlewares = (controller as any)["handlers"] ?? [];
+        const parentErrorHandler = (controller as any)?.errorHandler;
+        const parentVErrorHandler = (controller as any)?.vErrorHandler;
+        
+        if(parentErrorHandler) {
+            this.#errorMap[parentRoute] = parentErrorHandler;
+        }
+
+        if(parentVErrorHandler) {
+            
+            this.#vErrorMap[parentRoute] = parentVErrorHandler;
+        }
+
+        const router = Kaze.Router();
+
+        router.middlewares(...parentMiddlewares);
+        
+        for(const methodName of this.#getStaticMethods(controller)) {
+            const controllerMethod = (controller as any)[methodName];
+            const httpMethod = (controllerMethod as any)?.httpMethod;
+            const controllerRoute = (controllerMethod as any)?.route;
+            const controllerMiddlewares = (controllerMethod as any)?.handlers ?? [];
+
+            const errorHandler = (controllerMethod as any)?.errorHandler;
+            const vErrorHandler = (controllerMethod as any)?.vErrorHandler;
+
+            const fullRoute = `${parentRoute}${controllerRoute === "/" ? "" : controllerRoute}`.trim();
+            
+            if(errorHandler) {
+                this.#errorMap[fullRoute] = errorHandler;
+            }
+ 
+            if(vErrorHandler) {
+                this.#vErrorMap[fullRoute] = vErrorHandler;
+            }
+            
+            if(
+                !httpMethod || 
+                !controllerMethod ||
+                !controllerMiddlewares
+            ) continue;
+
+            (router as any)[httpMethod](
+                controllerRoute,
+                ...controllerMiddlewares,
+                controllerMethod
+            );
+        }
+        
+        this.routeGrp(parentRoute, router);
     }
 
     #appendToMapRouter(
@@ -563,7 +709,7 @@ export class Kaze<KazeDependencies> implements HttpMethods {
                                 ctx,
                                 err
                             );
-                        } else {
+                        } else {                                         
                             return this.#errorHandler(ctx, err);
                         }
                     }
@@ -611,6 +757,10 @@ export class Kaze<KazeDependencies> implements HttpMethods {
         port: number,
         listeningListener?: ListenCallback
     ) {
+        if(this.#isClassBased) {
+            this.globalErrorHandler(this.#anyErrorHandler);
+            this.globalVErrorHandler(this.#vErrorHandler);
+        }
 
         this.#port = port;
         this.#server.listen(this.#port, listeningListener);

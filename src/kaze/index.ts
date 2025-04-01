@@ -1,6 +1,6 @@
 import { 
     Kaze, 
-    KazeContext, 
+    type KazeContext, 
     KazeNextFunction,
     type KazeRendererContext,
 } from "./kaze";
@@ -60,6 +60,25 @@ import {
 
 import { FileRouter } from "./kaze-file-router";
 
+import {
+    Get,
+    Post,
+    Put,
+    Delete,
+    Patch,
+    Head,
+    Options,
+    Trace,
+    Connect,
+    Link,
+    Unlink,
+    All,
+    ParentRoute,
+    ErrorHandler,
+    Middlewares,
+    VErrorHandler
+} from "./kaze-class";
+
 export {
     Kaze,
     Validator,
@@ -100,4 +119,20 @@ export {
     type FilenameMutateFn,
     type FileUploadOptions,
     FileRouter,
+    Get,
+    Post,
+    Put,
+    Delete,
+    Patch,
+    Head,
+    Options,
+    Trace,
+    Connect,
+    Link,
+    Unlink,
+    All,
+    ParentRoute,
+    ErrorHandler,
+    Middlewares,
+    VErrorHandler
 }

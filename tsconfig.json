@@ -10,8 +10,10 @@
     "declarationDir": "./dist/types",
     "rootDir": "./src/kaze",
     "module": "ESNext",  // For ESM output
-    "lib": ["esnext"]
+    "lib": ["esnext"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
   },
   "include": ["src/kaze/**/*"],
-  "exclude": ["node_modules", "dist", "public", "routes"]
+  "exclude": ["node_modules", "dist", "public", "routes", "controllers"]
 }

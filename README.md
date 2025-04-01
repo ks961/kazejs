@@ -5,32 +5,218 @@ A flexible Node.js web framework built with TypeScript, focusing on dependency i
 ![KazeJS](https://raw.githubusercontent.com/ks961/imgs/refs/heads/main/KazeJS.png)
 
 - **Features**
-    - [**Routing [ static | dynamic ]**](#1-routing--static--dynamic-)
-    - [**Route Grouping [ static | dynamic ]**](#2-route-grouping--static--dynamic-)
-    - [**Middleware support**](#3-middleware-support)
-    - [**Dependency injection (Optional)**](#4-dependency-injection)
-    - [**Schema validation [ query | params | json-body ]**](#5-schema-validation--query--params--json-body-)
-    - [**Static file serving**](#6-static-file-serving)
-    - [**Global middleware support**](#7-global-middleware-support)
-    - [**Global error handling support [ Handler Errors | Schema validation Errors ]**](#8-global-error-handling-support--handler-errors--schema-validation-errors-)
-    - [**Async Request Handling**](#9-async-request-handling)
-    - [**Jwt Support**](#10-jwt-support)
-    - [**Cors Handling**](#11-cors-handling)
-    - [**File Upload**](#12-file-upload)
-    - [**Rendering Engine**](#13-rendering-engine)
-    - [**FileRouting [ Static | Dynamic | Middleware ]**](#14-filerouting--static--dynamic--middleware-)
+    - [**Class Based Routing and Controller Setup**](#1-class-based-routing-and-controller-setup)
+    - [**Routing [ static | dynamic ]**](#2-routing--static--dynamic-)
+    - [**Route Grouping [ static | dynamic ]**](#3-route-grouping--static--dynamic-)
+    - [**Middleware support**](#4-middleware-support)
+    - [**Dependency injection (Optional)**](#5-dependency-injection)
+    - [**Schema validation [ query | params | json-body ]**](#6-schema-validation--query--params--json-body-)
+    - [**Static file serving**](#7-static-file-serving)
+    - [**Global middleware support**](#8-global-middleware-support)
+    - [**Global error handling support [ Handler Errors | Schema validation Errors ]**](#9-global-error-handling-support--handler-errors--schema-validation-errors-)
+    - [**Async Request Handling**](#10-async-request-handling)
+    - [**Jwt Support**](#11-jwt-support)
+    - [**Cors Handling**](#12-cors-handling)
+    - [**File Upload**](#13-file-upload)
+    - [**Rendering Engine**](#14-rendering-engine)
+    - [**FileRouting [ Static | Dynamic | Middleware ]**](#15-filerouting--static--dynamic--middleware-)
 
 ---
 
-### 1. **Routing [ Static | Dynamic ]**
+### 1. Class Based Routing and Controller Setup:
 
+#### 0. **Before using this pattern**
+1. You must be using Typescript.
+2. Your tsconfig.json file must have these two options set to true.
+```json
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+    }
+}
+```
+
+#### 1. **@ParentRoute [Class Decorator]**
+
+The `@ParentRoute` decorator is used to define a parent route or namespace for all routes in a controller class. It acts like `app.use("/parent", router)` in Express, prefixing all routes inside the class with the given path.
+
+**Example**:
+```typescript
+@ParentRoute("/users")
+export class UsersController {
+    // All routes inside this class will be prefixed with "/users"
+    // All method declared inside must be 'static'
+}
+```
+
+**Explanation**:
+- The `@ParentRoute("/users")` decorator will make all the routes inside the `UsersController` class available under `/users` (e.g., `/users/:id`).
+- This decorator can only be applied at the class level and cannot be used on individual methods.
+
+---
+
+#### 2. **@ErrorHandler [Method Decorator]**
+
+The `@ErrorHandler` decorator is used to define a custom error handler for a route or controller method. It catches any errors thrown within the route handler and allows you to customize the error response.
+
+**Function Type**: 
+```typescript
+type ErrorHandler = (ctx: KazeContext, next: KazeNextFunction) => void;
+```
+
+**Example**:
+```typescript
+@ErrorHandler(errorHandler) // it will also act as a fallback if some method throws any kind of errors and you didn't declare '@ErrorHandler' over that method, then this will catch it.
+export class UsersController {
+    @Get("/:id")
+    @ErrorHandler(errorHandler) // this can be specific to methods too.
+    static getUser(ctx: KazeContext) {
+        // Custom error handler will catch any errors thrown here
+    }
+}
+```
+
+**Explanation**:
+- The `@ErrorHandler(errorHandler)` decorator specifies the error handler for the `getUser` route method.
+- If an error is thrown within this method, the specified `errorHandler` function will handle the error.
+- **Type of `errorHandler` function**:
+  - `ctx`: The context object representing the request/response cycle.
+  - `next`: A function that can be called to pass control to the next middleware or error handler.
+
+---
+
+#### 3. **@VErrorHandler [Method Decorator]**
+
+The `@VErrorHandler` decorator is used to define a validation error handler for a route or controller method. It specifically handles errors related to validation issues and provides a mechanism to customize the validation error response.
+
+**Function Type**: 
+```typescript
+type VErrorHandler = (ctx: KazeContext, error: KazeValidationError) => void;
+```
+
+**Example**:
+```typescript
+@VErrorHandler(errorVHandler) // it will also act as a fallback if some method throws validation error and you didn't declare '@VErrorHandler' over that method, then this will catch it.
+export class UsersController {
+    @Get("/:id")
+    @VErrorHandler(errorVHandler2) // this can be specific to methods too.
+    static getUser(ctx: KazeContext) {
+        // Custom validation error handler will catch any validation errors thrown here
+    }
+}
+```
+
+**Explanation**:
+- The `@VErrorHandler(errorVHandler)` decorator specifies a validation error handler for the `getUser` method.
+- If a validation error occurs in this method (such as failed input validation), the `errorVHandler` function will be called.
+- **Type of `errorVHandler` function**:
+  - `ctx`: The context object representing the request/response cycle.
+  - `error`: The validation error that occurred during input validation.
+
+---
+
+#### 4. **@Middlewares [Method Decorator]**
+
+The `@Middlewares` decorator is used to specify one or more middleware functions for a route or controller method. These middleware functions will be executed before the actual route handler is called.
+
+**Function Type**: 
+```typescript
+type Middleware = (ctx: KazeContext, next: KazeNextFunction) => void;
+```
+
+**Example**:
+```typescript
+@Middlewares(middleware1) // this will run for all method before they execute.
+export class UsersController {
+    @Get("/:id")
+    @Middlewares(middleware2) // middleware can be specific to methods too.
+    static getUser(ctx: KazeContext) {
+        // The middlewares will run before this method is executed
+    }
+}
+```
+
+**Explanation**:
+- The `@Middlewares(middleware1)` decorator applies the specified middlewares to the `getUser` route.
+- The middlewares will run in the order they are specified, and then the route handler will execute.
+- **Type of `middleware` function**:
+  - `ctx`: The context object representing the request/response cycle.
+  - `next`: A function that must be called to pass control to the next middleware or route handler.
+
+---
+
+#### 5. **Route Method Decorators (@Get, @Post, etc.) [Method Decorator]**
+
+To define routes for HTTP methods like GET, POST, PUT, DELETE, etc., you can use the respective decorators such as `@Get`, `@Post`, `@Put`, and `@Delete`. These decorators map HTTP methods to specific methods in the controller class.
+
+**Example**:
+```typescript
+@Get("/:id")
+static getUser(ctx: KazeContext) {
+    ctx.res.send("User details");
+}
+```
+
+**Explanation**:
+- The `@Get("/:id")` decorator binds the `getUser` method to handle GET requests at the `/users/:id` route.
+- Similarly, you can use `@Post`, `@Put`, and `@Delete` for other HTTP methods.
+
+---
+
+#### 6. **Static Methods in Controller [Method Requirement]**
+
+All methods in the controller class should be static. This is necessary because the routes and their handlers are registered statically.
+
+**Example**:
+```typescript
+export class UsersController {
+    @Get("/:id")
+    static getUser(ctx: KazeContext) {
+        ctx.res.send("User details");
+    }
+}
+```
+
+**Explanation**:
+- The `getUser` method is declared as `static`, which is a requirement for controller methods. It ensures that the route handler is properly registered when the controller is instantiated.
+
+---
+
+#### 7. **app.controller() [Controller Registration]**
+
+After defining the controller with routes, you need to register it using `app.controller()`.
+
+**Example**:
+```typescript
+const app = new Kaze({
+    class: true // class must set to true, if you wanna use class based controllers.
+});
+
+app.controller(UsersController);
+
+app.listen(3000);
+```
+
+**Explanation**:
+- This registers the `UsersController` class with the application, making all its routes available for handling HTTP requests.
+
+---
+
+### 2. **Routing [ Static | Dynamic ]**
+
+#### This is an entirely different pattern in which this web framework can be used. It functions similarly to how an Express-like framework operates.
 **Static Route Example**:  
 ```typescript
+const app = new Kaze();
+
 app.get("/api/users", async (ctx: KazeContext<Dep>) => {
     // Fetch and return a list of users
     const users = await ctx.dependencies?.db.query("SELECT * FROM users");
     ctx.res.json({ message: "List of users", users });
 });
+
+app.listen(3000);
 ```
 
 **Dynamic Route Example**:
@@ -45,7 +231,7 @@ app.get("/api/users/:id", async (ctx: KazeContext<Dep, { id: string }>) => {
 
 ---
 
-### 2. **Route Grouping [ Static | Dynamic ]**
+### 3. **Route Grouping [ Static | Dynamic ]**
 
 **Route Group Example**:  
 ```typescript
@@ -68,7 +254,7 @@ app.routeGrp("/users", userRouter);
 
 ---
 
-### 3. **Middleware Support**
+### 4. **Middleware Support**
 
 **Middleware Example**:  
 ```typescript
@@ -85,7 +271,7 @@ app.get("/api/protected", authMiddleware, (ctx: KazeContext<Dep>) => {
 
 ---
 
-### 4. **Dependency Injection**
+### 5. **Dependency Injection**
 
 **Dependency Injection Example**:  
 ```typescript
@@ -114,7 +300,7 @@ app.get("/api/users/:id", async (ctx: KazeContext<typeof dependencies, { id: str
 
 ---
 
-### 5. **Schema Validation [ Query | Params | JSON Body ]**
+### 6. **Schema Validation [ Query | Params | JSON Body ]**
 
 **Query Validation Example**:
 ```typescript
@@ -163,7 +349,7 @@ app.get("/api/user", jsonValidate(ageSchema), (ctx: KazeContext<any, any, any, {
 
 ---
 
-### 6. **Static File Serving**
+### 7. **Static File Serving**
 
 **Static File Example**:  
 ```typescript
@@ -173,7 +359,7 @@ app.static("public");
 
 ---
 
-### 7. **Global Middleware Support**
+### 8. **Global Middleware Support**
 
 **Global Middleware Example**:  
 ```typescript
@@ -189,7 +375,7 @@ app.addGlobalMiddleware(anotherGlobalMiddleware);
 
 ---
 
-### 8. **Global Error Handling Support [ Handler Errors | Schema Validation Errors ]**
+### 9. **Global Error Handling Support [ Handler Errors | Schema Validation Errors ]**
 
 **Global Error Handler Example**:  
 ```typescript
@@ -204,7 +390,7 @@ app.globalErrorHandler((ctx: KazeContext, err: unknown) => {
 });
 
 // Validation-specific error handling [ Invoked when a validation error occurs from 'queryValidate', 'paramsValidate' ]
-app.globalVErrorHandler((ctx: KazeContext, err: KazeValidationError) => {
+app.globalVErrorHandler((ctx: KazeContext, err: KazeKazeValidationError) => {
 
     console.log(err.vErrors); // Schema keys with their error messages
     ctx.res.statusCode(400)
@@ -214,7 +400,7 @@ app.globalVErrorHandler((ctx: KazeContext, err: KazeValidationError) => {
 
 ---
 
-### 9. **Async Request Handling**
+### 10. **Async Request Handling**
 
 **Async Request Example**:
 ```typescript
@@ -239,7 +425,7 @@ app.get("/middleware", anyMiddleware, async(ctx: KazeContext) => {
 
 ---
 
-### 10. **Jwt Support**
+### 11. **Jwt Support**
 
 **Jwt Example**:
 ```typescript
@@ -324,7 +510,7 @@ async function auth(ctx: KazeContext, next: KazeNextFunction) {
 
 ---
 
-### 11. **CORS Handling**
+### 12. **CORS Handling**
 
 **Cors Example**:
 ```typescript
@@ -341,7 +527,7 @@ app.get("/api/endpoint", (ctx: KazeContext) => {
 
 ---
 
-### 12. **File Upload**
+### 13. **File Upload**
 
 **File upload Example**:
 ```typescript
@@ -376,7 +562,7 @@ app.post("/submit", (ctx: KazeContext) => {
 
 ---
 
-### 13. **Rendering Engine**
+### 14. **Rendering Engine**
 
 Kaze custom rendering engines, enabling dynamic template rendering with data binding and template rendering flexibility. This feature allows for greater control over how the HTML is rendered in response to requests.
 
@@ -442,7 +628,9 @@ Here's how you can add the new information about FileRouting to your README docs
 
 ---
 
-### 14. **FileRouting [ Static | Dynamic | Middleware ]**
+### 15. **FileRouting [ Static | Dynamic | Middleware ]**
+
+#### This is also completely different approach for using the web framework. It operates by creating files with specific names and following the patterns associated with those names.
 
 **FileRouting Overview**:  
 FileRouting allows you to define routes and middlewares by organizing them inside directories. The route and middleware behavior is determined by the structure of the directories and files.
@@ -536,7 +724,7 @@ project-path/
 import { Context, KazeNextFunction } from "@d3vtool/kazejs";
 
 // Middleware to check if the user is authenticated
-export function authenticate(ctx: Context, next: KazeNextFunction) {
+export function authenticate(ctx: KazeContext, next: KazeNextFunction) {
     const token = ctx.req.headers.authorization;
 
     if (!token) {
@@ -654,7 +842,7 @@ export function GET(ctx: KazeContext) {
 import { Context, KazeNextFunction } from "@d3vtool/kazejs";
 
 // Example of a global middleware for logging requests
-export function logRequests(ctx: Context, next: KazeNextFunction) {
+export function logRequests(ctx: KazeContext, next: KazeNextFunction) {
     console.log(`[${new Date().toISOString()}] ${ctx.req.method} ${ctx.req.url}`);
     next();
 }

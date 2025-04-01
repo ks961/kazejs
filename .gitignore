@@ -3,3 +3,4 @@ dist/
 src/index.ts
 public/
 routes/
+controllers/

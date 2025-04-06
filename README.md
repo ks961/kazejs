@@ -67,7 +67,10 @@ type ErrorHandler = (ctx: KazeContext, next: KazeNextFunction) => void;
 
 **Example**:
 ```typescript
-@ErrorHandler(errorHandler) // it will also act as a fallback if some method throws any kind of errors and you didn't declare '@ErrorHandler' over that method, then this will catch it.
+// it will also act as a fallback if some method throws validation 
+// error and you didn't declare '@ErrorHandler' over that method, 
+// then this will catch it.
+@ErrorHandler(errorHandler)
 export class UsersController {
     @Get("/:id")
     @ErrorHandler(errorHandler) // this can be specific to methods too.
@@ -97,7 +100,10 @@ type VErrorHandler = (ctx: KazeContext, error: KazeValidationError) => void;
 
 **Example**:
 ```typescript
-@VErrorHandler(errorVHandler) // it will also act as a fallback if some method throws validation error and you didn't declare '@VErrorHandler' over that method, then this will catch it.
+// it will also act as a fallback if some method throws validation 
+// error and you didn't declare '@VErrorHandler' over that method, 
+// then this will catch it.
+@VErrorHandler(errorVHandler)
 export class UsersController {
     @Get("/:id")
     @VErrorHandler(errorVHandler2) // this can be specific to methods too.

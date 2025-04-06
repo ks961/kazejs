@@ -3,14 +3,10 @@
   "version": "1.12.0",
   "source": "src/kaze/index.ts",
   "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
   "scripts": {
-    "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "minify:esm": "esbuild dist/esm/**/*.js --minify --outdir=dist/esm --allow-overwrite",
-    "minify:cjs": "esbuild dist/cjs/**/*.js --minify --outdir=dist/esm --allow-overwrite",
-    "build": "npm run build:esm && npm run build:cjs && npm run minify:esm && npm run minify:cjs",
+    "build": "npm run build:cjs",
     "test": "vitest"
   },
   "keywords": [

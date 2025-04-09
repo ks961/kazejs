@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@d3vtool/secid": "^1.1.7",
-    "@d3vtool/utils": "^8.1.2"
+    "@d3vtool/utils": "^8.1.9"
   },
   "files": [
     "dist"

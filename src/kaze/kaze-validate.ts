@@ -77,15 +77,6 @@ export function paramsValidate<T extends ObjectValidator<Record<string, TAllData
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
         }
-       
-        try {
-            ctx.req.params = JSON.parse(ctx.req.params as any);
-        } catch (err) {
-            const msg = `Invalid Params: ${(err instanceof Error) ? err.message : "Params body is invalid."}`;
-            throw new KazeValidationError({
-                error: [msg]
-            });
-        }
 
         next();
     }

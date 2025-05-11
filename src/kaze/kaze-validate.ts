@@ -36,16 +36,6 @@ export function queryValidate<T extends ObjectValidator<Record<string, TAllDataV
             throw new KazeValidationError(errors);
         }
 
-
-        try {
-            ctx.req.query = JSON.parse(ctx.req.query as any);
-        } catch (err) {
-            const msg = `Invalid Query: ${(err instanceof Error) ? err.message : "Query structure is invalid."}`;
-            throw new KazeValidationError({
-                error: [msg]
-            });
-        }
-        
         next();
     }
 }

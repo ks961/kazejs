@@ -67,12 +67,20 @@ export function jsonValidate<T extends ObjectValidator<Record<string, TAllDataVa
 
         const errors = schema.validateSafely(ctx.req.body);
 
-        const errorsExists = Object.values(errors).filter(value => value.length > 0);
-
-        if(Object.keys(errorsExists).length > 0) {
+        if(Object.keys(errors).length > 0) {
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
+        }
+
+
+        try {
+            ctx.req.body = JSON.parse(ctx.req.body);
+        } catch (err) {
+            const msg = `Invalid JSON: ${(err instanceof Error) ? err.message : "JSON body is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
         }
 
         next();

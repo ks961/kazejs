@@ -28,14 +28,22 @@ export function queryValidate<T extends ObjectValidator<Record<string, TAllDataV
 
         const errors = schema.validateSafely(ctx.req.query);
         
-        const errorsExists = Object.values(errors).filter(value => value.length > 0);
-
-        if(Object.keys(errorsExists).length > 0) {
+        if(Object.keys(errors).length > 0) {
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
         }
 
+
+        try {
+            ctx.req.query = JSON.parse(ctx.req.query as any);
+        } catch (err) {
+            const msg = `Invalid Query: ${(err instanceof Error) ? err.message : "Query structure is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
+        }
+        
         next();
     }
 }
@@ -57,15 +65,20 @@ export function paramsValidate<T extends ObjectValidator<Record<string, TAllData
         }
 
         const errors = schema.validateSafely(ctx.req.params);
-
         
-        
-        const errorsExists = Object.values(errors).filter(value => value.length > 0);
-
-        if(Object.keys(errorsExists).length > 0) {
+        if(Object.keys(errors).length > 0) {
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
+        }
+       
+        try {
+            ctx.req.params = JSON.parse(ctx.req.params as any);
+        } catch (err) {
+            const msg = `Invalid Params: ${(err instanceof Error) ? err.message : "Params body is invalid."}`;
+            throw new KazeValidationError({
+                error: [msg]
+            });
         }
 
         next();

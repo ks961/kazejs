@@ -28,7 +28,9 @@ export function queryValidate<T extends ObjectValidator<Record<string, TAllDataV
 
         const errors = schema.validateSafely(ctx.req.query);
         
-        if(Object.keys(errors).length > 0) {
+        const errorsExists = Object.values(errors).filter(value => value.length > 0);
+
+        if(Object.keys(errorsExists).length > 0) {
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
@@ -65,8 +67,12 @@ export function paramsValidate<T extends ObjectValidator<Record<string, TAllData
         }
 
         const errors = schema.validateSafely(ctx.req.params);
+
         
-        if(Object.keys(errors).length > 0) {
+        
+        const errorsExists = Object.values(errors).filter(value => value.length > 0);
+
+        if(Object.keys(errorsExists).length > 0) {
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);

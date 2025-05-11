@@ -33,16 +33,6 @@ export function queryValidate<T extends ObjectValidator<Record<string, TAllDataV
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
         }
-
-
-        try {
-            ctx.req.query = JSON.parse(ctx.req.query as any);
-        } catch (err) {
-            const msg = `Invalid Query: ${(err instanceof Error) ? err.message : "Query structure is invalid."}`;
-            throw new KazeValidationError({
-                error: [msg]
-            });
-        }
         
         next();
     }
@@ -70,15 +60,6 @@ export function paramsValidate<T extends ObjectValidator<Record<string, TAllData
             // send all errors to global error handler
             // let user decide what to do with them.
             throw new KazeValidationError(errors);
-        }
-       
-        try {
-            ctx.req.params = JSON.parse(ctx.req.params as any);
-        } catch (err) {
-            const msg = `Invalid Params: ${(err instanceof Error) ? err.message : "Params body is invalid."}`;
-            throw new KazeValidationError({
-                error: [msg]
-            });
         }
 
         next();

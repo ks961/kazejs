@@ -73,16 +73,6 @@ export function jsonValidate<T extends ObjectValidator<Record<string, TAllDataVa
             throw new KazeValidationError(errors);
         }
 
-
-        try {
-            ctx.req.body = JSON.parse(ctx.req.body);
-        } catch (err) {
-            const msg = `Invalid JSON: ${(err instanceof Error) ? err.message : "JSON body is invalid."}`;
-            throw new KazeValidationError({
-                error: [msg]
-            });
-        }
-
         next();
     }
 }

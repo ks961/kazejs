@@ -3,7 +3,7 @@
   "version": "1.12.9",
   "main": "dist/cjs/index.js",
   "source": "src/kaze/index.ts",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/index.d.ts", 
   "exports": {
     ".": {
       "import": "./dist/cjs/index.js",

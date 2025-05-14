@@ -1,3 +1,5 @@
 import { SecId } from "@d3vtool/secid";
 
-export const generateId = SecId.generate;
+export function generateId(length?: number, alphabets?: string) {
+    return SecId.generate(length, alphabets)
+}

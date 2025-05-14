@@ -1,6 +1,6 @@
 {
   "name": "@d3vtool/kazejs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "dist/cjs/index.cjs",
   "source": "src/kaze/index.ts",
   "types": "dist/types/index.d.ts",

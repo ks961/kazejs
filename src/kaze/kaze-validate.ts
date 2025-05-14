@@ -1,13 +1,6 @@
 import { ObjectValidator } from "@d3vtool/utils";
 import { KazeValidationError } from "./kaze-errors";
 import { KazeContext, KazeNextFunction } from "./kaze";
-import {
-    Validator, 
-    VInfer, 
-    ValidationError, 
-    ObjectValidationError,
-
-} from "@d3vtool/utils";
 import { TAllDataValidators } from "@d3vtool/utils/dist/types/validator/types";
 
 export function queryValidate<T extends ObjectValidator<Record<string, TAllDataValidators>>>(
@@ -64,11 +57,4 @@ export function paramsValidate<T extends ObjectValidator<Record<string, TAllData
 
         next();
     }
-}
-
-export {
-    Validator,
-    type VInfer,
-    ValidationError,
-    ObjectValidationError,
 }

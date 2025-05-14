@@ -727,7 +727,7 @@ project-path/
 ```typescript
 // routes/@auth/middleware.ts
 
-import { Context, KazeNextFunction } from "@d3vtool/kazejs";
+import { KazeContext, KazeNextFunction } from "@d3vtool/kazejs";
 
 // Middleware to check if the user is authenticated
 export function authenticate(ctx: KazeContext, next: KazeNextFunction) {

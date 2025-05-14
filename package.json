@@ -1,13 +1,44 @@
 {
   "name": "@d3vtool/kazejs",
   "version": "1.12.9",
-  "source": "src/kaze/index.ts",
   "main": "dist/cjs/index.js",
+  "source": "src/kaze/index.ts",
   "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/cjs/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./validator": {
+      "import": "./dist/cjs/kaze-validator.js",
+      "require": "./dist/cjs/kaze-validator.js",
+      "types": "./dist/types/kaze-validator.d.ts"
+    },
+    "./jwt": {
+      "import": "./dist/cjs/kaze-jwt.js",
+      "require": "./dist/cjs/kaze-jwt.js",
+      "types": "./dist/types/kaze-jwt.d.ts"
+    },
+    "./cors": {
+      "import": "./dist/cjs/kaze-cors.js",
+      "require": "./dist/cjs/kaze-cors.js",
+      "types": "./dist/types/kaze-cors.d.ts"
+    },
+    "./kaze-class": {
+      "import": "./dist/cjs/kaze-class.js",
+      "require": "./dist/cjs/kaze-class.js",
+      "types": "./dist/types/kaze-class.d.ts"
+    },
+    "./kaze-id": {
+      "import": "./dist/cjs/kaze-id.js",
+      "require": "./dist/cjs/kaze-id.js",
+      "types": "./dist/types/kaze-id.d.ts"
+    }
+  },
   "scripts": {
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build": "npm run build:cjs",
-    "test": "vitest"
+    "build": "npm run build:cjs"
   },
   "keywords": [
     "kaze",
@@ -38,8 +69,7 @@
   "devDependencies": {
     "@types/node": "^22.10.5",
     "esbuild": "^0.25.0",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.2"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@d3vtool/secid": "^1.1.7",

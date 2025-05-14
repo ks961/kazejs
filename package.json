@@ -1,43 +1,43 @@
 {
   "name": "@d3vtool/kazejs",
-  "version": "2.0.1",
-  "main": "dist/cjs/index.cjs",
+  "version": "2.0.0",
+  "main": "dist/cjs/index.js",
   "source": "src/kaze/index.ts",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/cjs/index.cjs",
-      "require": "./dist/cjs/index.cjs",
+      "import": "./dist/cjs/index.js",
+      "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
     },
     "./validator": {
-      "import": "./dist/cjs/kaze-validator.cjs",
-      "require": "./dist/cjs/kaze-validator.cjs",
+      "import": "./dist/cjs/kaze-validator.js",
+      "require": "./dist/cjs/kaze-validator.js",
       "types": "./dist/types/kaze-validator.d.ts"
     },
     "./jwt": {
-      "import": "./dist/cjs/kaze-jwt.cjs",
-      "require": "./dist/cjs/kaze-jwt.cjs",
+      "import": "./dist/cjs/kaze-jwt.js",
+      "require": "./dist/cjs/kaze-jwt.js",
       "types": "./dist/types/kaze-jwt.d.ts"
     },
     "./cors": {
-      "import": "./dist/cjs/kaze-cors.cjs",
-      "require": "./dist/cjs/kaze-cors.cjs",
+      "import": "./dist/cjs/kaze-cors.js",
+      "require": "./dist/cjs/kaze-cors.js",
       "types": "./dist/types/kaze-cors.d.ts"
     },
     "./kaze-class": {
-      "import": "./dist/cjs/kaze-class.cjs",
-      "require": "./dist/cjs/kaze-class.cjs",
+      "import": "./dist/cjs/kaze-class.js",
+      "require": "./dist/cjs/kaze-class.js",
       "types": "./dist/types/kaze-class.d.ts"
     },
     "./kaze-id": {
-      "import": "./dist/cjs/kaze-id.cjs",
-      "require": "./dist/cjs/kaze-id.cjs",
+      "import": "./dist/cjs/kaze-id.js",
+      "require": "./dist/cjs/kaze-id.js",
       "types": "./dist/types/kaze-id.d.ts"
     }
   },
   "scripts": {
-    "build:cjs": "tsc -p tsconfig.cjs.cjson",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "build": "npm run build:cjs"
   },
   "keywords": [
@@ -65,7 +65,7 @@
   ],
   "author": "Sudhanshu Kumar",
   "license": "MIT",
-  "description": "A flexible Node.cjs web framework built with TypeScript, focusing on dependency injection, routing, middleware, and schema validation. Supports dynamic routes, global middleware, static files, and customizable error handling for scalable apps.",
+  "description": "A flexible Node.js web framework built with TypeScript, focusing on dependency injection, routing, middleware, and schema validation. Supports dynamic routes, global middleware, static files, and customizable error handling for scalable apps.",
   "devDependencies": {
     "@types/node": "^22.10.5",
     "esbuild": "^0.25.0",
